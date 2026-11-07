@@ -110,6 +110,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .cat-tile:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 .code-box{font-family:var(--display);font-size:3rem;letter-spacing:.25em;text-align:center;color:var(--saffron);background:var(--ink);border:2px dashed var(--line);border-radius:18px;padding:8px 12px;user-select:all}
 .you{font-size:.7rem;background:var(--ink-3);color:var(--sky);border-radius:999px;padding:1px 8px;margin-inline-start:6px;vertical-align:middle}
+.notice{background:rgba(242,182,50,.12);border:1px solid var(--saffron);color:var(--paper);border-radius:14px;padding:10px 14px;font-size:.9rem}
 .foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
 @keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
 .card{animation:pop .22s ease-out}
@@ -495,7 +496,7 @@ function chooseCat(k){
 }
 function sim(a,b){return a===b||(Math.min(a.length,b.length)>3&&(a.includes(b)||b.includes(a)));}
 function fakeError(v){
-  if(v.length<2) return "اكتب إجابة من حرفين على الأقل.";
+  if(!v.length) return "اكتب إجابتك أولاً.";
   if(sim(norm(v),norm(S.cur.a))) return "هذه قريبة جداً من الإجابة الصحيحة! اكتب كذبة مختلفة.";
   return "";
 }
@@ -590,18 +591,23 @@ function fbInit(){
   return fdb;
 }
 let myPid=null;
-try{myPid=sessionStorage.getItem("tmw-pid");}catch(e){}
-if(!myPid){myPid=Math.random().toString(36).slice(2,12);try{sessionStorage.setItem("tmw-pid",myPid);}catch(e){}}
+try{myPid=localStorage.getItem("tmw-pid");}catch(e){}
+if(!myPid){myPid=Math.random().toString(36).slice(2,12);try{localStorage.setItem("tmw-pid",myPid);}catch(e){}}
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))]);
 function fbRoomApi(){
   const db=fbInit(); if(!db) return null;
   return {join: async(name)=>{
-    const base=db.ref("rooms/"+name+"/peers"), me=base.child(myPid);
-    await withTimeout(me.onDisconnect().remove(),10000);
-    await withTimeout(me.update({joined:firebase.database.ServerValue.TIMESTAMP}),10000);
+    const roomRef=db.ref("rooms/"+name), base=roomRef.child("peers"), me=base.child(myPid), connRef=db.ref(".info/connected");
+    // لا نحذف اللاعب عند انقطاع قصير: نعلّمه غير متصل، ونعيد تثبيت حالته كاملة عند عودة الاتصال
+    const full={};
+    await withTimeout(me.child("joined").transaction(v=>v||Date.now()),10000);
+    await withTimeout(me.update({on:true}),10000);
     let off=null;
-    return {
-      presence:(patch)=>me.update(patch),
+    const api={
+      onReconnect:null,
+      presence:(patch)=>{for(const k in patch){if(patch[k]===null) delete full[k]; else full[k]=patch[k];} return me.update(patch);},
+      saveState:(str)=>roomRef.child("hs").set(str),
+      loadState:async()=>{const sn=await withTimeout(roomRef.child("hs").once("value"),10000);return sn.val();},
       onPeers:(h,err)=>{
         const cb=snap=>{const v=snap.val()||{};
           const peers=Object.entries(v).map(([pid,p])=>({peer:pid,sameTab:pid===myPid,isMe:pid===myPid,kind:"viewer",presence:p||{}}))
@@ -609,8 +615,16 @@ function fbRoomApi(){
           h({peers});};
         base.on("value",cb,e=>err&&err(e)); off=()=>base.off("value",cb); return off;
       },
-      leave: async()=>{ if(off) off(); await me.remove(); }
+      leave: async()=>{ connRef.off("value",onConn); if(off) off(); try{await me.onDisconnect().cancel();}catch(e){} await me.remove(); }
     };
+    const onConn=snap=>{
+      if(snap.val()!==true) return;
+      me.onDisconnect().update({on:false});
+      me.update(Object.assign({},full,{on:true}));
+      if(api.onReconnect) api.onReconnect();
+    };
+    connRef.on("value",onConn);
+    return api;
   }};
 }
 // Firebase يحذف المصفوفات الفارغة ويحوّل بعض الكائنات، فنعيد الحالة إلى شكلها المتوقع
@@ -642,29 +656,44 @@ function pres(peer){const x=O.peers.find(q=>q.peer===peer);return x&&x.presence?
 function myPeer(){const m=O.peers.find(p=>p.sameTab);return m?m.peer:null;}
 function myIdx(){const g=O.g,me=myPeer();return g&&g.pp&&me?g.pp.indexOf(me):-1;}
 
-async function enterRoom(code,host){
+let wakeLock=null;
+async function keepAwake(){
+  try{ if(navigator.wakeLock&&!wakeLock){ wakeLock=await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release",()=>{wakeLock=null;}); } }catch(e){}
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&O.screen==="game") keepAwake(); });
+const SESSION_KEY="tmw-session";
+function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({code:O.code,name:O.name.trim(),host:O.host,t:Date.now()}));}catch(e){}}
+function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
+function readSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY)||"null");if(s&&s.code&&Date.now()-s.t<6*3600e3) return s;}catch(e){}return null;}
+async function enterRoom(code,host,resume){
   const nm=O.name.trim();
   if(!nm){O.err="اكتب اسمك أولاً.";return render();}
   if(!host&&!/^[a-z0-9]{5}$/.test(code)){O.err="الرمز من 5 أحرف وأرقام، كما يظهر عند المضيف.";return render();}
-  if(host&&!S.cats.length){O.err="اختر فئة واحدة على الأقل.";return render();}
+  if(host&&!resume&&!S.cats.length){O.err="اختر فئة واحدة على الأقل.";return render();}
   O.err="";O.busy=true;render();
   const room=await roomApi();
   if(!room){O.busy=false;O.err="الخادم غير مضبوط بعد: أضف إعدادات Firebase في الملف.";return render();}
   try{ O.R=await room.join("tmw-"+code); }
-  catch(e){O.busy=false;O.err="تعذّر الاتصال بالخادم. تأكد من الإنترنت وحاول مرة أخرى.";return render();}
+  catch(e){O.busy=false;O.err="تعذّر الاتصال بالخادم. تأكد من الإنترنت وحاول مرة أخرى.";if(resume){clearSession();O.screen="menu";}return render();}
   try{localStorage.setItem("tamweeh-name",nm);}catch(e){}
   O.busy=false;O.code=code;O.host=host;O.screen="game";O.g=null;O.gs="";O.key="";O.hostGoneAt=Date.now();
   if(host){
-    Object.assign(HS,{phase:"lobby",players:[],scores:{},round:0,rounds:S.rounds,timer:S.timer,cats:S.cats.slice(),used:[],deadline:0});
+    let restored=false;
+    if(resume){ try{ const st=await O.R.loadState(); if(st){ for(const k in HS) delete HS[k]; Object.assign(HS,JSON.parse(st)); restored=true; } }catch(e){} }
+    if(!restored) Object.assign(HS,{phase:"lobby",players:[],scores:{},round:0,rounds:S.rounds,timer:S.timer,cats:S.cats.slice(),used:[],deadline:0});
     lastPub="";
     hostIv=setInterval(hostStep,500);
   }
+  O.R.onReconnect=()=>{ lastPub=""; if(O.host) publish(); };
+  saveSession(); keepAwake();
   O.R.presence({n:nm.slice(0,16),h:host?1:0}).catch(()=>{});
   O.R.onPeers(ch=>{O.peers=ch.peers;onRoom();},()=>{O.err="انقطع الاتصال بالغرفة.";render();});
   clientIv=setInterval(clientTick,250);
   render();
 }
 function leaveRoom(){
+  clearSession();
+  if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null;}
   clearInterval(hostIv);clearInterval(clientIv);hostIv=clientIv=null;
   if(O.R) O.R.leave().catch(()=>{});
   Object.assign(O,{gs:"",screen:"menu",R:null,g:null,peers:[],host:false,code:"",key:"",deadline:0,err:""});
@@ -676,6 +705,8 @@ function onRoom(){
   const hp=O.peers.find(p=>p.presence&&p.presence.h&&p.presence.g);
   const g=hp?hp.presence.g:null;
   if(g) O.hostGoneAt=0; else if(!O.hostGoneAt) O.hostGoneAt=Date.now();
+  const off=!!(hp&&hp.presence.on===false&&!O.host);
+  if(off!==O.hostOff){O.hostOff=off; if(O.g) render();}
   if(O.host){ if(O.g&&O.g.ph==="lobby") render(); return; }
   setG(g);
 }
@@ -696,7 +727,7 @@ function hostStep(){
   const H=HS,now=Date.now();
   if(H.phase==="lobby"){
     const me=myPeer(),seen=[];
-    O.peers.forEach(p=>{if(p.kind==="viewer"&&p.presence&&p.presence.n&&!seen.some(s=>s.p===p.peer)) seen.push({p:p.peer,n:String(p.presence.n).slice(0,16)});});
+    O.peers.forEach(p=>{if(p.kind==="viewer"&&p.presence&&p.presence.n&&p.presence.on!==false&&!seen.some(s=>s.p===p.peer)) seen.push({p:p.peer,n:String(p.presence.n).slice(0,16)});});
     seen.sort((a,b)=>(b.p===me)-(a.p===me));
     H.players=seen.slice(0,8);
   }else if(H.phase==="choose"){
@@ -707,7 +738,7 @@ function hostStep(){
       const pr=pres(pl.p),f=pr&&pr.f;
       if(f&&f.r===H.round&&typeof f.t==="string"&&f.a!==H.seenA[i]){
         H.seenA[i]=f.a;const t=f.t.trim().slice(0,40);
-        if(t.length<2||sim(norm(t),norm(H.cur.a))){H.bad[i]=f.a;delete H.fakes[i];}
+        if(!t.length||sim(norm(t),norm(H.cur.a))){H.bad[i]=f.a;delete H.fakes[i];}
         else{H.fakes[i]=t;delete H.bad[i];}
       }
     });
@@ -781,6 +812,7 @@ function publish(){
   if(s===lastPub) return;
   lastPub=s;
   O.R.presence({g}).catch(()=>{});
+  try{ O.R.saveState(JSON.stringify(HS)).catch(()=>{}); }catch(e){}
   setG(g);
 }
 function setG(g){
@@ -795,8 +827,8 @@ function setG(g){
 // ---------- أفعال اللاعب ----------
 function oSendFake(){
   const el=document.getElementById("ofake"),v=((el&&el.value)||"").trim();
-  if(v.length<2){O.err="اكتب إجابة من حرفين على الأقل.";return render();}
-  O.err="";O.myA++;O.sentA=O.myA;
+  if(!v.length){O.err="اكتب إجابتك أولاً.";return render();}
+  O.err="";O.myA=Date.now();O.sentA=O.myA;
   O.R.presence({f:{r:O.g.r,t:v.slice(0,40),a:O.myA}}).catch(()=>{});
   render();
 }
@@ -848,6 +880,10 @@ function scoreListO(withGain){
 }
 function waitCard(t){return `<section class="card handoff">${mascot}<div class="muted">${t}</div></section>`;}
 function gameView(){
+  const v=gameViewInner();
+  return O.hostOff&&O.g?`<div class="notice" role="status">انقطع اتصال المضيف مؤقتاً، اللعبة متوقفة حتى يعود.</div>`+v:v;
+}
+function gameViewInner(){
   const g=O.g,me=myIdx(),leave=`<button class="btn ghost" data-o="leave">اخرج من الغرفة</button>`;
   if(!g){
     const gone=O.hostGoneAt&&Date.now()-O.hostGoneAt>6000;
@@ -926,7 +962,13 @@ function onlineClick(t){
   return true;
 }
 
-render();
+(function resumeIfNeeded(){
+  const ss=readSession();
+  if(!ss) return render();
+  O.name=ss.name||O.name; S.screen="online"; O.screen="game"; O.code=ss.code;
+  render();
+  enterRoom(ss.code,!!ss.host,true);
+})();
 </script>
 </body>
 </html>
