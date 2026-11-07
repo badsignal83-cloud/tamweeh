@@ -112,6 +112,8 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .you{font-size:.7rem;background:var(--ink-3);color:var(--sky);border-radius:999px;padding:1px 8px;margin-inline-start:6px;vertical-align:middle}
 .notice{background:rgba(242,182,50,.12);border:1px solid var(--saffron);color:var(--paper);border-radius:14px;padding:10px 14px;font-size:.9rem}
 .btn.small{font-size:1rem;padding:8px 12px;box-shadow:0 3px 0 #121830}
+.chip small{opacity:.7;font-size:.75em}
+.chip.closed{opacity:.4;text-decoration:line-through;cursor:not-allowed}
 .foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
 @keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
 .card{animation:pop .22s ease-out}
@@ -340,11 +342,28 @@ const BANK = [
 const CATS = {lang:"لغة وأدب",hist:"تاريخ",islam:"تاريخ إسلامي",geo:"جغرافيا",sci:"علوم",gulf:"السعودية والخليج",tech:"تقنية",sport:"رياضة",food:"أكل وطبخ",animals:"حيوانات",weird:"غرائب",kanimals:"حيوانات",kworld:"عالمنا",kbody:"جسمي وصحتي",kgen:"معلومات عامة",kislam:"ديني"};
 const isKid=k=>["kanimals","kworld","kbody","kgen","kislam"].includes(k);
 const ADULT_CATS=Object.keys(CATS).filter(k=>!isKid(k)), KID_CATS=Object.keys(CATS).filter(isKid);
+// الأسئلة المستخدمة تُحفظ على هذا الجوال ولا تتكرر حتى يبدأها اللاعب من جديد
+const qid=q=>{let h=5381;for(const ch of q.q) h=((h*33)^ch.charCodeAt(0))>>>0;return h.toString(36);};
+let USED=new Set();
+try{USED=new Set(JSON.parse(localStorage.getItem("tmw-used")||"[]"));}catch(e){}
+function saveUsed(){try{localStorage.setItem("tmw-used",JSON.stringify([...USED]));}catch(e){}}
+const leftIn=k=>BANK.filter(q=>q.c===k&&!USED.has(qid(q))).length;
+const leftTotal=cats=>cats.reduce((n,k)=>n+leftIn(k),0);
+function takeQ(k){
+  const pool=BANK.filter(q=>q.c===k&&!USED.has(qid(q)));
+  if(!pool.length) return null;
+  const q=pool[Math.floor(Math.random()*pool.length)];
+  USED.add(qid(q)); saveUsed(); return q;
+}
 function catChipsHTML(){
-  const chip=k=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${CATS[k]}</button>`;
+  const chip=k=>{const left=leftIn(k);
+    return left?`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${CATS[k]} <small>${left}</small></button>`
+      :`<button class="chip closed" disabled title="انتهت أسئلتها">${CATS[k]} <small>مغلقة</small></button>`;};
   return `<div class="eyebrow">فئات الكبار</div><div class="chips">${ADULT_CATS.map(chip).join("")}</div>
     <div class="eyebrow">فئات الأطفال (5–12 سنة)</div><div class="chips">${KID_CATS.map(chip).join("")}</div>
-    <div class="row"><button class="btn ghost small" data-catset="adult">الكبار فقط</button><button class="btn ghost small" data-catset="kids">الأطفال فقط</button></div>`;
+    <div class="row"><button class="btn ghost small" data-catset="adult">الكبار فقط</button><button class="btn ghost small" data-catset="kids">الأطفال فقط</button></div>
+    <div class="muted">بقي ${leftTotal(Object.keys(CATS))} سؤالاً من ${BANK.length}. الرقم بجانب كل فئة هو أسئلتها المتبقية، ولا يتكرر أي سؤال على هذا الجوال حتى تبدأ الأسئلة من جديد.</div>
+    ${USED.size?`<button class="btn ghost small" data-resetq>${S.resetArm?"متأكد؟ اضغط مرة ثانية":"ابدأ كل الأسئلة من جديد"}</button>`:""}`;
 }
 const LET = ["أ","ب","ج","د","هـ","و","ز","ح","ط","ي","ك"];
 
@@ -474,7 +493,7 @@ const VIEWS={
   choose(){
     const who=S.players[(S.round-1)%S.players.length];
     const tiles=S.cats.map(k=>{const left=remaining(k);
-      return `<button class="cat-tile" data-choose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"انتهت أسئلتها"}</small></button>`;}).join("");
+      return `<button class="cat-tile" data-choose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"مغلقة · انتهت أسئلتها"}</small></button>`;}).join("");
     return `<section class="card">
       <div class="eyebrow">اختيار الفئة</div>
       <h2>دور ${esc(who)} يختار فئة هذه الجولة</h2>
@@ -546,6 +565,7 @@ const VIEWS={
     const top=ranked[0], tie=ranked.filter(p=>p.s===top.s).length>1;
     return `<section class="card handoff">
       ${mascot}
+      ${S.out?'<div class="notice">انتهت أسئلة الفئات المختارة، فانتهت اللعبة قبل آخر جولة.</div>':""}
       <div class="muted">${tie?"تعادل في القمة!":"الفائز"}</div>
       <div class="big-name">${tie?ranked.filter(p=>p.s===top.s).map(p=>esc(p.n)).join(" و "):esc(top.n)}</div>
       <div class="muted">${top.s} نقطة</div>
@@ -561,7 +581,7 @@ function late(){
   if(np.length) out.push(`انتهى وقته قبل الاختيار: ${np.map(esc).join("، ")}`);
   return out.map(t=>`<div class="muted">${t}</div>`).join("");
 }
-function remaining(k){return BANK.filter((q,i)=>q.c===k&&!S.used.includes(i)).length;}
+function remaining(k){return leftIn(k);}
 function rank(){return S.players.map((n,i)=>({n,i,s:S.scores[i]||0,g:S.gains[i]||0})).sort((a,b)=>b.s-a.s);}
 function scoreCard(withGain){
   const r=rank();
@@ -576,21 +596,22 @@ function startGame(){
   if(new Set(names).size!==names.length){S.err="كل لاعب يحتاج اسماً مختلفاً.";return render();}
   if(!S.cats.length){S.err="اختر فئة واحدة على الأقل.";return render();}
   S.players=names;
-  if(S.used.length+S.rounds>BANK.filter(q=>S.cats.includes(q.c)).length) S.used=[];
-  const pool=BANK.filter((q,i)=>S.cats.includes(q.c)&&!S.used.includes(i));
-  if(pool.length<S.rounds){S.err=`الفئات المختارة فيها ${pool.length} أسئلة فقط. اختر فئات أكثر أو جولات أقل.`;return render();}
+  S.cats=S.cats.filter(k=>leftIn(k));
+  if(!S.cats.length){S.err="انتهت أسئلة الفئات المختارة. اختر فئات أخرى، أو ابدأ كل الأسئلة من جديد.";return render();}
   try{localStorage.setItem("tamweeh-setup",JSON.stringify({v:2,players:S.players,cats:S.cats,rounds:S.rounds,timer:S.timer}));}catch(e){}
   S.err=""; S.scores={}; S.round=0;
   nextRound();
 }
 function nextRound(){
+  S.out=false;
+  if(!S.cats.some(k=>leftIn(k))){S.out=true;S.screen="final";render();return;}
   S.round++; S.fakes={}; S.picks={}; S.gains={}; S.err=""; S.screen="choose"; render();
 }
 function chooseCat(k){
   if(k==="random"){const av=S.cats.filter(remaining);k=av[Math.floor(Math.random()*av.length)];}
-  const idx=shuffle(BANK.map((q,i)=>i).filter(i=>BANK[i].c===k&&!S.used.includes(i)))[0];
-  if(idx==null) return;
-  S.used.push(idx); S.cur=BANK[idx];
+  const q=takeQ(k);
+  if(!q) return;
+  S.cur=q;
   S.phase="write"; S.turn=0; S.screen="handoff"; render();
 }
 // مسافة التحرير: كم حرفاً يجب تغييره لتصبح الكلمة الأولى هي الثانية
@@ -672,7 +693,8 @@ app.addEventListener("click",e=>{
   else if(t.dataset.cat){const k=t.dataset.cat;S.cats=S.cats.includes(k)?S.cats.filter(c=>c!==k):[...S.cats,k];render();}
   else if(t.dataset.rounds){S.rounds=+t.dataset.rounds;render();}
   else if(t.dataset.timer!=null){S.timer=+t.dataset.timer;render();}
-  else if(t.dataset.catset){S.cats=(t.dataset.catset==="kids"?KID_CATS:ADULT_CATS).slice();if(t.dataset.catset==="kids"&&S.timer&&S.timer<60)S.timer=60;render();}
+  else if(t.dataset.resetq!=null){if(S.resetArm){USED.clear();saveUsed();S.resetArm=false;}else S.resetArm=true;render();}
+  else if(t.dataset.catset){S.cats=(t.dataset.catset==="kids"?KID_CATS:ADULT_CATS).filter(k=>leftIn(k));if(t.dataset.catset==="kids"&&S.timer&&S.timer<60)S.timer=60;render();}
   else if(t.dataset.choose) chooseCat(t.dataset.choose);
   else if(t.id==="start") startGame();
   else if(t.id==="ready"){S.screen=S.phase;startTimer();render();}
@@ -733,6 +755,9 @@ function fbRoomApi(){
       onReconnect:null,
       presence:(patch)=>{for(const k in patch){if(patch[k]===null) delete full[k]; else full[k]=patch[k];} return me.update(patch);},
       saveState:(str)=>roomRef.child("hs").set(str),
+      // سجل الأسئلة لكل لاعب (بمعرّف جهازه)، مستقل عن الغرفة والمضيف
+      loadSeen:async(pid)=>{const sn=await withTimeout(db.ref("seen/"+pid).once("value"),8000);return Object.keys(sn.val()||{});},
+      markSeen:(pids,id)=>{const u={};pids.forEach(p=>u["seen/"+p+"/"+id]=true);return db.ref().update(u);},
       loadState:async()=>{const sn=await withTimeout(roomRef.child("hs").once("value"),10000);return sn.val();},
       onPeers:(h,err)=>{
         const cb=snap=>{const v=snap.val()||{};
@@ -777,7 +802,26 @@ async function roomApi(){
 }
 const CODE_CH="abcdefghjkmnpqrstuvwxyz23456789";
 const newCode=()=>Array.from({length:5},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join("");
-const remainingIn=(used,k)=>BANK.filter((q,i)=>q.c===k&&!used.includes(i)).length;
+const SEEN={}; // معرّف اللاعب ← مجموعة الأسئلة التي رآها في أي غرفة سابقة
+const seenLoading=new Set();
+function loadSeenFor(pid){
+  if(SEEN[pid]||seenLoading.has(pid)||!O.R||!O.R.loadSeen) return;
+  seenLoading.add(pid);
+  O.R.loadSeen(pid).then(ids=>{SEEN[pid]=new Set(ids);}).catch(()=>{SEEN[pid]=new Set();}).finally(()=>{seenLoading.delete(pid);if(O.host) publish();});
+}
+const seenByRoom=id=>HS.players&&HS.players.some(p=>SEEN[p.p]&&SEEN[p.p].has(id));
+const freshInRoom=q=>{const id=qid(q);return !USED.has(id)&&!seenByRoom(id);};
+const remainingIn=(used,k)=>BANK.filter(q=>q.c===k&&freshInRoom(q)).length;
+function takeQRoom(k){
+  const pool=BANK.filter(q=>q.c===k&&freshInRoom(q));
+  if(!pool.length) return null;
+  const q=pool[Math.floor(Math.random()*pool.length)], id=qid(q);
+  USED.add(id); saveUsed();
+  const pids=HS.players.map(p=>p.p);
+  pids.forEach(p=>{(SEEN[p]=SEEN[p]||new Set()).add(id);});
+  try{O.R.markSeen(pids,id).catch(()=>{});}catch(e){}
+  return q;
+}
 function pres(peer){const x=O.peers.find(q=>q.peer===peer);return x&&x.presence?x.presence:null;}
 function myPeer(){const m=O.peers.find(p=>p.sameTab);return m?m.peer:null;}
 function myIdx(){const g=O.g,me=myPeer();return g&&g.pp&&me?g.pp.indexOf(me):-1;}
@@ -795,7 +839,7 @@ async function enterRoom(code,host,resume){
   const nm=O.name.trim();
   if(!nm){O.err="اكتب اسمك أولاً.";return render();}
   if(!host&&!/^[a-z0-9]{5}$/.test(code)){O.err="الرمز من 5 أحرف وأرقام، كما يظهر عند المضيف.";return render();}
-  if(host&&!resume&&!S.cats.length){O.err="اختر فئة واحدة على الأقل.";return render();}
+  if(host&&!resume){S.cats=S.cats.filter(k=>leftIn(k)); if(!S.cats.length){O.err="انتهت أسئلة الفئات المختارة. اختر فئات أخرى، أو ابدأ كل الأسئلة من جديد.";return render();}}
   O.err="";O.busy=true;render();
   const room=await roomApi();
   if(!room){O.busy=false;O.err="الخادم غير مضبوط بعد: أضف إعدادات Firebase في الملف.";return render();}
@@ -811,6 +855,7 @@ async function enterRoom(code,host,resume){
     hostIv=setInterval(hostStep,500);
   }
   O.R.onReconnect=()=>{ lastPub=""; if(O.host) publish(); };
+  if(host&&HS.players) HS.players.forEach(p=>loadSeenFor(p.p));
   saveSession(); keepAwake();
   O.R.presence({n:nm.slice(0,16),h:host?1:0}).catch(()=>{});
   O.R.onPeers(ch=>{O.peers=ch.peers;onRoom();},()=>{O.err="انقطع الاتصال بالغرفة.";render();});
@@ -856,6 +901,7 @@ function hostStep(){
     O.peers.forEach(p=>{if(p.kind==="viewer"&&p.presence&&p.presence.n&&p.presence.on!==false&&!seen.some(s=>s.p===p.peer)) seen.push({p:p.peer,n:String(p.presence.n).slice(0,16)});});
     seen.sort((a,b)=>(b.p===me)-(a.p===me));
     H.players=seen.slice(0,8);
+    H.players.forEach(p=>loadSeenFor(p.p));
   }else if(H.phase==="choose"){
     const ch=H.players[(H.round-1)%H.players.length],pr=pres(ch.p);
     if(pr&&pr.c&&pr.c.r===H.round&&H.cats.includes(pr.c.k)&&remainingIn(H.used,pr.c.k)) hostSetQ(pr.c.k);
@@ -880,14 +926,16 @@ function hostStep(){
 }
 function hostDeadline(){HS.deadline=HS.timer?Date.now()+HS.timer*1000:0;}
 function hostNextRound(){
-  const H=HS;H.round++;H.phase="choose";H.deadline=0;H.cur=null;H.opts=[];H.fakes={};H.bad={};H.seenA={};H.picks={};H.gains={};
+  const H=HS;H.out=0;
+  if(!H.cats.some(k=>remainingIn(0,k))){H.phase="final";H.out=1;H.deadline=0;return;}
+  H.round++;H.phase="choose";H.deadline=0;H.cur=null;H.opts=[];H.fakes={};H.bad={};H.seenA={};H.picks={};H.gains={};
 }
 function hostSetQ(k){
   const H=HS;
   if(k==="random"){const av=H.cats.filter(c=>remainingIn(H.used,c));if(!av.length) return;k=av[Math.floor(Math.random()*av.length)];}
-  const idx=shuffle(BANK.map((q,i)=>i).filter(i=>BANK[i].c===k&&!H.used.includes(i)))[0];
-  if(idx==null) return;
-  H.used.push(idx);H.cur=BANK[idx];H.phase="write";hostDeadline();
+  const q=takeQRoom(k);
+  if(!q) return;
+  H.cur=q;H.phase="write";hostDeadline();
 }
 function hostToPick(){
   const H=HS,groups=[];
@@ -909,16 +957,16 @@ function hostToReveal(){
 }
 function hostAction(a){
   const H=HS;
-  if(a==="start"){if(!H.players.length) return;H.scores={};H.round=0;hostNextRound();}
+  if(a==="start"){if(!H.players.length) return; if(H.players.some(p=>!SEEN[p.p])){H.players.forEach(p=>loadSeenFor(p.p));return;}H.scores={};H.round=0;hostNextRound();}
   else if(a==="random"&&H.phase==="choose") hostSetQ("random");
   else if(a==="skip"){if(H.phase==="write") hostToPick();else if(H.phase==="pick") hostToReveal();}
   else if(a==="next"&&H.phase==="reveal"){if(H.round>=H.rounds){H.phase="final";}else hostNextRound();}
-  else if(a==="again"&&H.phase==="final"){H.scores={};H.round=0;if(H.used.length+H.rounds>BANK.filter(q=>H.cats.includes(q.c)).length) H.used=[];hostNextRound();}
+  else if(a==="again"&&H.phase==="final"){H.scores={};H.round=0;hostNextRound();}
   publish();
 }
 function buildG(){
   const H=HS,n=H.players.length;
-  const g={ph:H.phase,r:H.round,rs:H.rounds,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>H.scores[i]||0)};
+  const g={out:H.out?1:0,ph:H.phase,r:H.round,rs:H.rounds,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>H.scores[i]||0)};
   if(H.phase==="choose"&&n){g.ch=(H.round-1)%n;g.cats=H.cats.map(k=>[k,remainingIn(H.used,k)]);}
   if(H.cur&&(H.phase==="write"||H.phase==="pick"||H.phase==="reveal")) g.q=[H.cur.c,H.cur.q];
   if(H.phase==="write"){g.rem=H.timer*1000;g.dn=Object.keys(H.fakes).map(Number);g.bad=H.bad;}
@@ -1025,12 +1073,13 @@ function gameViewInner(){
     return `<section class="card"><div class="eyebrow">رمز الغرفة</div>${codeBox()}
         <div class="muted">على كل لاعب أن يفتح هذا الرابط نفسه من جواله، يضغط «العب من جوالك» ثم «انضم برمز» ويكتب الرمز.</div></section>
       <section class="card"><div class="eyebrow">اللاعبون (${g.pl.length} من 8)</div><div class="score-list">${list||'<div class="muted">بانتظار اللاعبين…</div>'}</div></section>
-      ${O.host?`<button class="btn" data-o="start" ${g.pl.length<2?"disabled":""}>${g.pl.length<2?"بانتظار لاعب واحد على الأقل":"ابدأ اللعب"}</button>`:waitCard("بانتظار المضيف ليبدأ اللعبة")}${leave}`;
+      ${O.host?(()=>{const ready=HS.players&&HS.players.every(p=>SEEN[p.p]);const dis=g.pl.length<2||!ready;
+        return `<button class="btn" data-o="start" ${dis?"disabled":""}>${g.pl.length<2?"بانتظار لاعب واحد على الأقل":!ready?"جارٍ تحميل سجل اللاعبين…":"ابدأ اللعب"}</button>`;})():waitCard("بانتظار المضيف ليبدأ اللعبة")}${leave}`;
   }
   if(g.ph==="choose"){
     const who=g.pl[g.ch];
     if(me===g.ch){
-      const tiles=g.cats.map(([k,left])=>`<button class="cat-tile" data-ochoose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"انتهت أسئلتها"}</small></button>`).join("");
+      const tiles=g.cats.map(([k,left])=>`<button class="cat-tile" data-ochoose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"مغلقة · انتهت أسئلتها"}</small></button>`).join("");
       return `<section class="card"><div class="eyebrow">اختيار الفئة</div><h2>دورك تختار فئة هذه الجولة</h2><div class="cat-grid">${tiles}</div></section>
         <button class="btn ghost" data-o="${O.host?"random":"crandom"}">اختيار عشوائي</button>`;
     }
@@ -1065,7 +1114,7 @@ function gameViewInner(){
   }
   if(g.ph==="final"){
     const r=g.pl.map((n,i)=>({n,s:g.sc[i]||0})).sort((a,b)=>b.s-a.s),top=r[0],tops=r.filter(p=>p.s===top.s);
-    return `<section class="card handoff">${mascot}<div class="muted">${tops.length>1?"تعادل في القمة!":"الفائز"}</div>
+    return `<section class="card handoff">${mascot}${g.out?'<div class="notice">انتهت أسئلة الفئات المختارة، فانتهت اللعبة قبل آخر جولة.</div>':""}<div class="muted">${tops.length>1?"تعادل في القمة!":"الفائز"}</div>
       <div class="big-name">${tops.map(p=>esc(p.n)).join(" و ")}</div><div class="muted">${top.s} نقطة</div></section>
       ${scoreListO(false)}${O.host?`<button class="btn" data-o="again">لعبة جديدة بنفس اللاعبين</button>`:""}${leave}`;
   }
