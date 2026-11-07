@@ -114,6 +114,15 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .btn.small{font-size:1rem;padding:8px 12px;box-shadow:0 3px 0 #121830}
 .chip small{opacity:.7;font-size:.75em}
 .chip.closed{opacity:.4;text-decoration:line-through;cursor:not-allowed}
+.status-list{display:flex;flex-direction:column;gap:6px}
+.st-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--ink)}
+.st-row .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.st-row.alert{outline:2px solid var(--pom)}
+.st{font-size:.8rem;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.st.ok{background:var(--mint);color:#06281e}.st.wait{background:var(--ink-3);color:var(--muted)}
+.st.warn{background:var(--pom);color:#fff}.st.off{background:var(--ink-3);color:var(--pom)}
+.left{color:var(--pom);font-size:.75rem}
+.notice.alert{border-color:var(--pom);background:rgba(224,69,94,.15)}
 .foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
 @keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
 .card{animation:pop .22s ease-out}
@@ -127,7 +136,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -1302,7 +1311,20 @@ let wakeLock=null;
 async function keepAwake(){
   try{ if(navigator.wakeLock&&!wakeLock){ wakeLock=await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release",()=>{wakeLock=null;}); } }catch(e){}
 }
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&O.screen==="game") keepAwake(); });
+// كشف الخروج من التطبيق أثناء السؤال: يُبلَّغ الجميع فوراً
+let awayCount={r:0,n:0};
+function reportAway(away){
+  if(!away){ if(O.R) O.R.presence({aw:0}).catch(()=>{}); return; }
+  const g=O.g; if(!O.R||O.screen!=="game"||!g||(g.ph!=="write"&&g.ph!=="pick")||myIdx()<0) return;
+  if(away){ if(awayCount.r!==g.r) awayCount={r:g.r,n:0}; awayCount.n++; }
+  O.R.presence({aw:away?1:0,ax:{r:awayCount.r,n:awayCount.n}}).catch(()=>{});
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"){ if(O.screen==="game") keepAwake(); reportAway(false); }
+  else reportAway(true);
+});
+window.addEventListener("pagehide",()=>reportAway(true));
+window.addEventListener("blur",()=>{ if(document.visibilityState==="visible") return; reportAway(true); });
 const SESSION_KEY="tmw-session";
 function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({code:O.code,name:O.name.trim(),host:O.host,t:Date.now()}));}catch(e){}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
@@ -1350,8 +1372,28 @@ function onRoom(){
   if(g) O.hostGoneAt=0; else if(!O.hostGoneAt) O.hostGoneAt=Date.now();
   const off=!!(hp&&hp.presence.on===false&&!O.host);
   if(off!==O.hostOff){O.hostOff=off; if(O.g) render();}
-  if(O.host){ if(O.g&&O.g.ph==="lobby") render(); return; }
-  setG(g);
+  if(O.host){ if(O.g&&O.g.ph==="lobby") render(); }
+  else setG(g);
+  const sig=JSON.stringify(O.peers.map(p=>[p.peer,p.presence&&p.presence.aw,p.presence&&p.presence.on,p.presence&&p.presence.ax]));
+  if(sig!==O.statSig){O.statSig=sig; if(O.g&&["write","pick","reveal"].includes(O.g.ph)) render();}
+}
+// حالة كل لاعب بالاسم: أجاب / ما زال / خارج التطبيق / غير متصل
+function playerState(g,i){
+  const pr=pres(g.pp[i])||{};
+  const left=pr.ax&&pr.ax.r===g.r?pr.ax.n:0;
+  return {done:g.dn.includes(i),away:pr.aw===1,off:pr.on===false,left};
+}
+function statusHTML(g){
+  const verb=g.ph==="write"?"يكتب…":"يختار…";
+  const me=myIdx();
+  return `<div class="status-list">${g.pl.map((n,i)=>{const st=playerState(g,i);
+    const tag=st.off?`<span class="st off">غير متصل</span>`:st.away?`<span class="st warn">⚠️ خارج التطبيق</span>`:st.done?`<span class="st ok">✓ أجاب</span>`:`<span class="st wait">${verb}</span>`;
+    return `<div class="st-row ${st.away||st.off?"alert":""}"><span class="nm">${esc(n)}${i===me?' <span class="you">أنت</span>':""}</span>${st.left?`<small class="left">خرج ${st.left===1?"مرة":st.left===2?"مرتين":st.left+" مرات"}</small>`:""}${tag}</div>`;}).join("")}</div>`;
+}
+function awayBanner(g){
+  if(!g||(g.ph!=="write"&&g.ph!=="pick")) return "";
+  const names=g.pl.filter((_,i)=>{const st=playerState(g,i);return (st.away||st.off)&&!st.done;});
+  return names.length?`<div class="notice alert" role="alert">⚠️ خارج التطبيق الآن أثناء السؤال: ${names.map(esc).join("، ")}</div>`:"";
 }
 function clientTick(){
   if(S.screen!=="online"||O.screen!=="game") return;
@@ -1562,26 +1604,27 @@ function gameViewInner(){
     if(viewer) return `<section class="card">${qBlock}<div class="muted">أنت تشاهد هذه اللعبة فقط لأنك دخلت بعد بدايتها.</div></section>${leave}`;
     const done=g.dn.includes(me),rejected=g.bad&&g.bad[me]===O.myA&&O.myA>0;
     let body;
-    if(done) body=`<div class="muted">أرسلت كذبتك ✓ بانتظار الآخرين</div>${prog(g.dn)}`;
+    if(done) body=`<div class="muted">أرسلت كذبتك ✓ بانتظار الآخرين</div>`;
     else if(O.sentA&&O.sentA===O.myA&&!rejected) body=`<div class="muted">جارٍ إرسال كذبتك…</div>`;
     else body=`<label for="ofake">اكتب إجابة مزيفة تخدع بها الآخرين</label>
       <input type="text" id="ofake" data-keep maxlength="40" autocomplete="off" placeholder="كذبة مقنعة…">
       <div class="err" role="alert">${rejected?"هذه قريبة جداً من الإجابة الصحيحة! اكتب كذبة مختلفة.":esc(O.err)}</div>
       <button class="btn" data-o="send">أرسل إجابتي</button>`;
-    return `<section class="card">${timerHTML()}${qBlock}${body}</section>${done?skip:""}`;
+    return `${awayBanner(g)}<section class="card">${timerHTML()}${qBlock}${body}</section><section class="card"><div class="eyebrow">اللاعبون</div>${statusHTML(g)}</section>${done?skip:""}`;
   }
   if(g.ph==="pick"){
     if(viewer) return `<section class="card">${qBlock}<div class="muted">اللاعبون يختارون الآن…</div></section>${leave}`;
     const done=g.dn.includes(me)||O.sentA===-1;
     const opts=g.op.map(([t,o],i)=>o.includes(me)?"":`<button class="opt" data-opick="${i}"><span class="letter">${LET[i]||i+1}</span><span>${esc(t)}</span></button>`).join("");
-    return `<section class="card">${timerHTML()}${qBlock}${done?`<div class="muted">تم اختيارك ✓ بانتظار الآخرين</div>${prog(g.dn)}`:`<div class="muted">أين الحقيقة؟ (إجابتك مخفية عنك)</div><div class="opts">${opts}</div>`}</section>${done?skip:""}`;
+    return `${awayBanner(g)}<section class="card">${timerHTML()}${qBlock}${done?`<div class="muted">تم اختيارك ✓ بانتظار الآخرين</div>`:`<div class="muted">أين الحقيقة؟ (إجابتك مخفية عنك)</div><div class="opts">${opts}</div>`}</section><section class="card"><div class="eyebrow">اللاعبون</div>${statusHTML(g)}</section>${done?skip:""}`;
   }
   if(g.ph==="reveal"){
     const items=g.op.map(([t,o,by])=>({t,o,by})).sort((a,b)=>(b.o==="T")-(a.o==="T")||b.by.length-a.by.length);
     const list=items.map(({t,o,by})=>{const T=o==="T";const lab=T?"الحقيقة":o==="H"?"فخ اللعبة":"كذبة "+o.map(i=>esc(g.pl[i])).join(" و ");
       return `<div class="rv ${T?"true":""}"><span class="badge ${T?"t":"f"}">${lab}</span><div class="ans">${esc(t)}</div>
         <div class="who">${by.length?`اختارها: <b>${by.map(i=>esc(g.pl[i])).join("، ")}</b>`:"لم يخترها أحد"}</div></div>`;}).join("");
-    const late=[g.nf.length&&g.pl.length>1?`لم يكتب كذبة في الوقت: ${g.nf.map(i=>esc(g.pl[i])).join("، ")}`:"",g.np.length?`لم يختر في الوقت: ${g.np.map(i=>esc(g.pl[i])).join("، ")}`:""].filter(Boolean).map(t=>`<div class="muted">${t}</div>`).join("");
+    const leftNames=g.pl.map((n,i)=>({n,k:playerState(g,i).left})).filter(x=>x.k);
+    const late=[leftNames.length?`⚠️ خرج من التطبيق أثناء الجولة: ${leftNames.map(x=>esc(x.n)+(x.k>1?` (${x.k} مرات)`:"")).join("، ")}`:"",g.nf.length&&g.pl.length>1?`لم يكتب كذبة في الوقت: ${g.nf.map(i=>esc(g.pl[i])).join("، ")}`:"",g.np.length?`لم يختر في الوقت: ${g.np.map(i=>esc(g.pl[i])).join("، ")}`:""].filter(Boolean).map(t=>`<div class="muted">${t}</div>`).join("");
     return `<section class="card">${qBlock}<div class="reveal-list">${list}</div>${late}</section>${scoreListO(true)}
       ${O.host?`<button class="btn" data-o="next">${g.last?"النتيجة النهائية":"الجولة التالية"}</button>`:waitCard("بانتظار المضيف للجولة التالية")}`;
   }
