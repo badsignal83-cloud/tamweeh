@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#141a2e">
+<title>تمويه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Readex+Pro:wght@400;500;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+/* Layout: one narrow game card per screen, pass-the-phone flow; majlis night palette, committed single dark look */
+:root{
+  --ink:#141a2e; --ink-2:#1d2540; --ink-3:#2a3456;
+  --saffron:#f2b632; --saffron-deep:#c98a12;
+  --pom:#e0455e; --mint:#5fd3b0; --sky:#7aa7ff;
+  --paper:#f4efe4; --muted:#a5adc8; --line:#33406a;
+  --display:"Lalezar","Readex Pro","Segoe UI",Tahoma,sans-serif;
+  --body:"Readex Pro","Segoe UI",Tahoma,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--ink);
+  background-image:radial-gradient(circle at 50% -10%, #2b3a78 0, transparent 55%),
+    repeating-linear-gradient(45deg, transparent 0 22px, rgba(255,255,255,.025) 22px 23px),
+    repeating-linear-gradient(-45deg, transparent 0 22px, rgba(255,255,255,.025) 22px 23px);
+  color:var(--paper); font-family:var(--body); font-size:16px; line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+  padding-block:20px;
+}
+#app{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-height:100%}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-family:var(--display);font-size:2.4rem;line-height:1;color:var(--saffron);
+  text-shadow:0 3px 0 var(--saffron-deep), 0 6px 0 rgba(0,0,0,.35);letter-spacing:0}
+.tag{font-size:.8rem;color:var(--muted)}
+.round-pill{font-size:.8rem;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--paper);font-variant-numeric:tabular-nums;white-space:nowrap}
+.card{background:var(--ink-2);border:2px solid var(--line);border-radius:22px;padding:20px;
+  box-shadow:0 8px 0 #0c1020;display:flex;flex-direction:column;gap:14px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.25;text-wrap:balance}
+h1{font-size:1.9rem} h2{font-size:1.45rem}
+.eyebrow{font-size:.78rem;color:var(--saffron);letter-spacing:.04em}
+.muted{color:var(--muted);font-size:.9rem}
+.q{font-size:1.2rem;font-weight:500;line-height:1.7}
+.cat-chip{align-self:flex-start;font-size:.78rem;background:var(--ink-3);border-radius:999px;padding:3px 12px;color:var(--sky)}
+label{font-size:.9rem;color:var(--muted)}
+input[type=text]{width:100%;font:inherit;font-size:1.05rem;color:var(--paper);background:var(--ink);
+  border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+input[type=text]:focus{outline:none;border-color:var(--saffron)}
+.btn{font:inherit;font-family:var(--display);font-size:1.3rem;border:0;border-radius:16px;padding:12px 18px;cursor:pointer;
+  color:#2a1a00;background:var(--saffron);box-shadow:0 5px 0 var(--saffron-deep);transition:transform .08s, box-shadow .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--saffron-deep)}
+.btn:focus-visible,.opt:focus-visible,.chip:focus-visible,.icon-btn:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.btn.pom{background:var(--pom);color:#fff;box-shadow:0 5px 0 #9c2238}
+.btn.ghost{background:var(--ink-3);color:var(--paper);box-shadow:0 5px 0 #121830}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px}
+.players{display:flex;flex-direction:column;gap:8px}
+.player-row{display:flex;gap:8px;align-items:center}
+.player-row input{flex:1;min-width:0}
+.icon-btn{flex:0 0 44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--ink);color:var(--muted);font-size:1.2rem;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.9rem;padding:8px 14px;border-radius:999px;border:2px solid var(--line);background:var(--ink);color:var(--muted);cursor:pointer}
+.chip[aria-pressed=true]{border-color:var(--saffron);color:var(--paper);background:rgba(242,182,50,.12)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;font-size:1.05rem;text-align:right;padding:14px 16px;border-radius:16px;border:2px solid var(--line);
+  background:var(--ink);color:var(--paper);cursor:pointer;display:flex;gap:12px;align-items:center}
+.opt .letter{flex:0 0 32px;height:32px;border-radius:10px;background:var(--ink-3);display:grid;place-items:center;font-family:var(--display);color:var(--saffron);font-size:1.1rem}
+.opt:hover{border-color:var(--sky)}
+.err{color:var(--pom);font-size:.9rem;min-height:1.4em}
+.handoff{align-items:center;text-align:center;padding-block:36px}
+.handoff .big-name{font-family:var(--display);font-size:3rem;color:var(--saffron);line-height:1.1}
+.mascot{width:96px;height:96px}
+.reveal-list{display:flex;flex-direction:column;gap:10px}
+.rv{border-radius:16px;border:2px solid var(--line);padding:12px 14px;background:var(--ink);display:flex;flex-direction:column;gap:4px}
+.rv.true{border-color:var(--mint);background:rgba(95,211,176,.08)}
+.rv .ans{font-weight:700}
+.rv .who{font-size:.85rem;color:var(--muted)}
+.rv .who b{color:var(--paper);font-weight:500}
+.badge{font-size:.75rem;border-radius:999px;padding:2px 10px;align-self:flex-start}
+.badge.t{background:var(--mint);color:#06281e}
+.badge.f{background:var(--ink-3);color:var(--muted)}
+.score-list{display:flex;flex-direction:column;gap:8px}
+.sc{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:var(--ink)}
+.sc .rank{font-family:var(--display);color:var(--muted);width:24px;font-size:1.2rem}
+.sc .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.sc .pts{font-family:var(--display);font-size:1.4rem;color:var(--saffron);font-variant-numeric:tabular-nums}
+.sc .gain{font-size:.85rem;color:var(--mint);font-variant-numeric:tabular-nums}
+.sc.lead{outline:2px solid var(--saffron)}
+.rules{margin:0;padding-inline-start:20px;color:var(--muted);font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+.progress{display:flex;gap:6px;justify-content:center}
+.progress span{width:10px;height:10px;border-radius:50%;background:var(--ink-3)}
+.progress span.done{background:var(--saffron)}
+.timer{display:flex;align-items:center;gap:10px}
+.timer .bar{flex:1;height:10px;border-radius:999px;background:var(--ink);overflow:hidden;border:1px solid var(--line)}
+.timer .fill{height:100%;width:100%;background:var(--mint);border-radius:999px;transition:width .25s linear,background .3s}
+.timer .fill.warn{background:var(--saffron)} .timer .fill.danger{background:var(--pom)}
+.timer .sec{font-family:var(--display);font-size:1.4rem;min-width:2.2em;text-align:center;font-variant-numeric:tabular-nums}
+.cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cat-tile{font:inherit;text-align:right;border-radius:18px;border:2px solid var(--line);background:var(--ink);color:var(--paper);padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cat-tile b{font-family:var(--display);font-weight:400;font-size:1.25rem;color:var(--saffron)}
+.cat-tile small{color:var(--muted);font-size:.8rem}
+.cat-tile:hover{border-color:var(--saffron)}
+.cat-tile[disabled]{opacity:.35;cursor:not-allowed}
+.cat-tile:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.code-box{font-family:var(--display);font-size:3rem;letter-spacing:.25em;text-align:center;color:var(--saffron);background:var(--ink);border:2px dashed var(--line);border-radius:18px;padding:8px 12px;user-select:all}
+.you{font-size:.7rem;background:var(--ink-3);color:var(--sky);border-radius:999px;padding:1px 8px;margin-inline-start:6px;vertical-align:middle}
+.foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
+@keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
+.card{animation:pop .22s ease-out}
+@media (prefers-reduced-motion:reduce){.card{animation:none}.btn{transition:none}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div id="app" dir="rtl" lang="ar"></div>
+
+<script>
+const BANK = [
+  // لغة وأدب
+  {c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
+  {c:"lang",q:"ماذا تعني كلمة «سيّارة» في سورة يوسف؟",a:"القافلة من المسافرين",d:["البئر العميقة","النجم الذي يهتدي به المسافرون","الكواكب التي تسير في السماء","الإبل المحمّلة بالماء","جماعة الحرس"]},
+  {c:"lang",q:"ماذا كانت تعني «الجريدة» في الأصل؟",a:"سعفة النخل بعد نزع خوصها",d:["الخيل التي تسبق الجيش","الأرض الجرداء","قائمة أسماء الجند","الرمح الطويل","الثوب الممزق"]},
+  {c:"lang",q:"ماذا كان يعني «الشَّنَب» في الفصحى القديمة؟",a:"بياض الأسنان وبريقها",d:["طرف السيف الحاد","الشعر النابت قبل اللحية","تجعّد الجبين","الصوت الأجش","شدة العطش"]},
+  {c:"lang",q:"ماذا كانت تعني «السُّفرة» في الأصل؟",a:"طعام المسافر",d:["جلد الناقة المدبوغ","خريطة الطريق","ورقة الكتابة","حقيبة الدراهم","مقعد الراكب على الناقة"]},
+  {c:"lang",q:"ماذا كانت تعني «القهوة» عند العرب قبل معرفة البن؟",a:"الخمر",d:["اللبن الحامض","التمر المجفف","الحليب الساخن","الماء البارد","العصير المحلّى بالعسل"]},
+  {c:"lang",q:"«الإسكافي» في التراث العربي هو صانع ماذا؟",a:"الأحذية",d:["السكاكين","السروج","الأقفال","الأواني الفخارية","الحبال"]},
+  {c:"lang",q:"ما معنى «الغَضَنْفَر»؟",a:"الأسد",d:["النسر الضخم","الذئب الأسود","الصقر","الفيل","الحصان الأصيل"]},
+  {c:"lang",q:"ماذا يُسمّى صوت الحمامة في العربية؟",a:"الهديل",d:["الصفير","النقيق","الصياح","العواء","النعيق"]},
+  {c:"lang",q:"من الشاعر الملقب بـ«الملك الضِّلّيل»؟",a:"امرؤ القيس",d:["عنترة بن شداد","النابغة الذبياني","المتنبي","زهير بن أبي سلمى","طرفة بن العبد"]},
+  {c:"lang",q:"ما معنى «الدُّجى»؟",a:"الظلام",d:["المطر الخفيف","الغبار","الندى","السحاب الكثيف","الرياح الباردة"]},
+  {c:"lang",q:"كلمة «صِفر» العربية انتقلت إلى الإنجليزية وصارت أي كلمة؟",a:"Zero",d:["Sphere","Zephyr","Sapphire","Saffron","Zenith"]},
+  // تاريخ
+  {c:"hist",q:"كم دقيقة استمرت الحرب بين بريطانيا وزنجبار عام 1896 تقريباً؟",a:"38 دقيقة",d:["3 ساعات","يومان","6 أشهر","أسبوع","12 ساعة"]},
+  {c:"hist",q:"أي خليفة أمر بضرب أول عملة إسلامية عربية خالصة؟",a:"عبد الملك بن مروان",d:["هارون الرشيد","عمر بن عبد العزيز","عثمان بن عفان","المأمون","معاوية بن أبي سفيان"]},
+  {c:"hist",q:"بنى أبو جعفر المنصور مدينة لتكون عاصمة الدولة العباسية. ما هي؟",a:"بغداد",d:["سامراء","الكوفة","البصرة","الرقة","الموصل"]},
+  {c:"hist",q:"كم سنة استمرت حرب البسوس بحسب الروايات المشهورة؟",a:"أربعون سنة",d:["سبع سنوات","مئة سنة","عشر سنوات","عشرون سنة","سنتان"]},
+  {c:"hist",q:"ما الحيوان الذي استخدمه هانيبال لعبور جبال الألب؟",a:"الفيلة",d:["الجمال","البغال المدرعة","الثيران","الخيول البربرية","الكلاب الضخمة"]},
+  {c:"hist",q:"من بنى قصر الحمراء في غرناطة؟",a:"بنو الأحمر",d:["المرابطون","بنو أمية","الموحدون","بنو عباد","الفاطميون"]},
+  {c:"hist",q:"في أي عام سقطت غرناطة آخر معاقل المسلمين في الأندلس؟",a:"1492",d:["1258","1453","1212","1517","1609"]},
+  {c:"hist",q:"ما عاصمة الدولة الأموية؟",a:"دمشق",d:["القدس","حلب","بغداد","المدينة المنورة","الكوفة"]},
+  {c:"hist",q:"من اخترع الطباعة بالحروف المتحركة في أوروبا؟",a:"يوهان غوتنبرغ",d:["ليوناردو دافنشي","مارتن لوثر","إسحاق نيوتن","توماس إديسون","جيمس وات"]},
+  {c:"hist",q:"على أي مادة كان المصريون القدماء يكتبون؟",a:"ورق البردي",d:["جلد الماعز","ألواح النحاس","ورق التوت","جلود الغزلان","سعف النخل"]},
+  {c:"hist",q:"ما اسم الطريق التجاري القديم الذي ربط الصين بالعالم؟",a:"طريق الحرير",d:["طريق البخور","طريق الذهب","طريق التوابل","طريق الملح","طريق الفيلة"]},
+  {c:"hist",q:"من فتح القسطنطينية عام 1453؟",a:"محمد الفاتح",d:["سليمان القانوني","صلاح الدين الأيوبي","عثمان الأول","بايزيد الأول","مراد الثاني"]},
+  {c:"hist",q:"في أي عام غرقت السفينة تيتانيك؟",a:"1912",d:["1905","1923","1899","1915","1931"]},
+  // جغرافيا
+  {c:"geo",q:"ما عاصمة أستراليا؟",a:"كانبرا",d:["سيدني","ملبورن","بيرث","بريزبن","أديلايد"]},
+  {c:"geo",q:"ما الدولة الوحيدة التي علمها ليس مستطيلاً ولا مربعاً؟",a:"نيبال",d:["بوتان","سويسرا","الدنمارك","اليابان","سريلانكا"]},
+  {c:"geo",q:"أي دولة تملك أكبر عدد من البحيرات في العالم؟",a:"كندا",d:["فنلندا","روسيا","السويد","النرويج","الولايات المتحدة"]},
+  {c:"geo",q:"ما اسم أعمق نقطة معروفة في محيطات الأرض؟",a:"خندق ماريانا",d:["خندق بورتوريكو","هوة بايكال","خندق جاوة","خندق تونغا","حفرة الأطلسي الكبرى"]},
+  {c:"geo",q:"كم دولة تحدّ السعودية برّاً؟",a:"سبع دول",d:["خمس دول","تسع دول","ست دول","أربع دول","عشر دول"]},
+  {c:"geo",q:"ما أصغر دولة في العالم مساحة؟",a:"الفاتيكان",d:["موناكو","سان مارينو","ليختنشتاين","مالطا","أندورا"]},
+  {c:"geo",q:"ما عاصمة كندا؟",a:"أوتاوا",d:["تورنتو","مونتريال","فانكوفر","كيبيك","كالغاري"]},
+  {c:"geo",q:"ما أكبر دولة عربية مساحة؟",a:"الجزائر",d:["السعودية","السودان","ليبيا","مصر","موريتانيا"]},
+  {c:"geo",q:"ما المدينة الكبرى التي تقع في قارتين؟",a:"إسطنبول",d:["القاهرة","موسكو","أثينا","باكو","تبليسي"]},
+  {c:"geo",q:"في أي بحر يطفو الإنسان بسهولة بسبب شدة ملوحته؟",a:"البحر الميت",d:["البحر الأحمر","بحر قزوين","البحر الأسود","بحر العرب","البحر المتوسط"]},
+  {c:"geo",q:"كم عدد القارات في التقسيم الأكثر شيوعاً؟",a:"سبع قارات",d:["ست قارات","خمس قارات","أربع قارات","تسع قارات","ثماني قارات"]},
+  {c:"geo",q:"ما عاصمة تركيا؟",a:"أنقرة",d:["إسطنبول","إزمير","أنطاليا","بورصة","قونية"]},
+  // علوم
+  {c:"sci",q:"ما أكبر عضو في جسم الإنسان؟",a:"الجلد",d:["الكبد","الأمعاء الدقيقة","القلب","الرئتان","الدماغ"]},
+  {c:"sci",q:"كم قلباً يملك الأخطبوط؟",a:"ثلاثة قلوب",d:["قلبان","ثمانية قلوب","قلب واحد","أربعة قلوب","خمسة قلوب"]},
+  {c:"sci",q:"أي كوكب يدور حول نفسه عكس اتجاه معظم كواكب المجموعة الشمسية؟",a:"الزهرة",d:["المريخ","عطارد","زحل","المشتري","نبتون"]},
+  {c:"sci",q:"ما المعدن الذي يكون سائلاً في درجة حرارة الغرفة؟",a:"الزئبق",d:["الصوديوم","الرصاص","الألمنيوم","القصدير","النحاس"]},
+  {c:"sci",q:"كم عظمة في جسم الإنسان البالغ؟",a:"206",d:["300","186","212","250","150"]},
+  {c:"sci",q:"ما الغاز الذي تمتصه النباتات من الهواء لصنع غذائها؟",a:"ثاني أكسيد الكربون",d:["النيتروجين","الأكسجين","الهيليوم","الأوزون","الهيدروجين"]},
+  {c:"sci",q:"أي كوكب يُلقّب بالكوكب الأحمر؟",a:"المريخ",d:["المشتري","زحل","عطارد","الزهرة","أورانوس"]},
+  {c:"sci",q:"ما أصلب مادة طبيعية معروفة؟",a:"الألماس",d:["التيتانيوم","الياقوت","الزمرد","الغرانيت","الكوارتز"]},
+  {c:"sci",q:"كم يستغرق ضوء الشمس ليصل إلى الأرض تقريباً؟",a:"8 دقائق",d:["ثانية واحدة","ساعة كاملة","30 ثانية","24 ساعة","3 دقائق"]},
+  {c:"sci",q:"ما العنصر الأكثر وفرة في الكون؟",a:"الهيدروجين",d:["الأكسجين","الهيليوم","الكربون","النيتروجين","الحديد"]},
+  {c:"sci",q:"كم سناً للإنسان البالغ عادة؟",a:"32",d:["28","36","30","40","24"]},
+  {c:"sci",q:"ما أكبر كوكب في المجموعة الشمسية؟",a:"المشتري",d:["زحل","نبتون","أورانوس","الأرض","المريخ"]},
+  // السعودية والخليج
+  {c:"gulf",q:"ما أكبر صحراء رملية متصلة في العالم؟",a:"الربع الخالي",d:["صحراء النفود","صحراء الدهناء","الصحراء الكبرى","صحراء الجافورة","رمال وهيبة"]},
+  {c:"gulf",q:"ما الاسم القديم لموقع مدينة الرياض؟",a:"حجر اليمامة",d:["العارض الكبير","قرية المصمك","الدرعية","سدير","الخرج"]},
+  {c:"gulf",q:"ما اسم الموقع النبطي في العُلا المسجل في قائمة اليونسكو؟",a:"الحِجر",d:["تيماء","قرية الفاو","دومة الجندل","الأخدود","ثاج"]},
+  {c:"gulf",q:"بماذا لُقّبت بئر الدمام رقم 7، أول بئر نفط تجارية في السعودية؟",a:"بئر الخير",d:["بئر البركة","بئر الأمل","بئر السعادة","بئر الفجر","بئر النور"]},
+  {c:"gulf",q:"أي دولة خليجية كانت تُعرف قديماً باسم «أوال»؟",a:"البحرين",d:["قطر","عُمان","الكويت","الإمارات","اليمن"]},
+  {c:"gulf",q:"من أول رائد فضاء عربي؟",a:"الأمير سلطان بن سلمان",d:["هزاع المنصوري","ريانة برناوي","محمد فارس","علي القرني","سلطان النيادي"]},
+  {c:"gulf",q:"في أي عام أُعلن توحيد المملكة باسم المملكة العربية السعودية؟",a:"1932",d:["1902","1945","1925","1953","1919"]},
+  {c:"gulf",q:"ما الحصن الذي استرده الملك عبدالعزيز في الرياض عام 1902؟",a:"قصر المصمك",d:["قلعة الدرعية","حصن الطائف","قصر المربع","قلعة تاروت","حصن مارد"]},
+  {c:"gulf",q:"ما عملة سلطنة عُمان؟",a:"الريال العُماني",d:["الدينار العُماني","الدرهم العُماني","الدينار البحريني","الليرة العُمانية","التومان"]},
+  {c:"gulf",q:"في أي مدينة يقع برج خليفة؟",a:"دبي",d:["أبوظبي","الدوحة","الشارقة","المنامة","الرياض"]},
+  {c:"gulf",q:"ما السوق العربي الشهير في الجاهلية قرب الطائف؟",a:"سوق عكاظ",d:["سوق الزل","سوق المباركية","سوق الحمراء","سوق الطيبات","سوق القيصرية"]},
+  {c:"gulf",q:"ما أكبر واحة نخيل في العالم؟",a:"واحة الأحساء",d:["واحة سيوة","واحة العين","واحة تيماء","واحة ليوا","واحة الجوف"]},
+  // تقنية
+  {c:"tech",q:"على اسم من سُمّيت تقنية «بلوتوث»؟",a:"ملك دنماركي قديم",d:["عالم سويدي","سفينة فايكنغ","مهندس نرويجي","سمكة زرقاء","جبل في فنلندا"]},
+  {c:"tech",q:"ما الاسم الأول لمحرك بحث جوجل؟",a:"BackRub",d:["PageFinder","Googol","LinkMaster","SearchMe","Galaxy"]},
+  {c:"tech",q:"بماذا بدأت شركة نوكيا نشاطها عام 1865؟",a:"صناعة الورق",d:["صناعة الأحذية","صناعة الساعات","صناعة الأسلحة","صناعة الدراجات","صناعة الزجاج"]},
+  {c:"tech",q:"ما نص أول رسالة SMS أُرسلت في العالم عام 1992؟",a:"Merry Christmas",d:["Hello World","Can you read me","Happy New Year","Test message","Are you there"]},
+  {c:"tech",q:"أي شركة أطلقت أول جوال تجاري في العالم عام 1983؟",a:"موتورولا",d:["نوكيا","إريكسون","سامسونج","سوني","سيمنز"]},
+  {c:"tech",q:"ماذا يعني الحرف G في 5G؟",a:"الجيل",d:["غيغابت","عالمي","الشبكة","الجاهزية","الجيغاهيرتز"]},
+  {c:"tech",q:"من أسس مايكروسوفت مع بول ألن؟",a:"بيل غيتس",d:["ستيف جوبز","لاري بيج","مارك زوكربيرغ","ستيف وزنياك","إيلون ماسك"]},
+  {c:"tech",q:"ما اسم أول حاسوب إلكتروني عام الأغراض الذي اكتمل عام 1945؟",a:"ENIAC",d:["UNIVAC","IBM-1","ATARI","MARK-X","DELTA-1"]},
+  {c:"tech",q:"ماذا يعني اسم Wi-Fi رسمياً؟",a:"لا شيء، مجرد اسم تجاري",d:["Wireless Fidelity","Wide Field","Wireless Field","Wide Fidelity","Web Fiber"]},
+  {c:"tech",q:"في أي سنة أُطلق أول آيفون؟",a:"2007",d:["2005","2009","2003","2010","2001"]},
+  {c:"tech",q:"أي لغة برمجة سُمّيت على اسم فرقة كوميدية بريطانية؟",a:"بايثون",d:["جافا","روبي","سي شارب","بيرل","سويفت"]},
+  {c:"tech",q:"ماذا يعني اختصار SIM في شريحة الجوال؟",a:"وحدة هوية المشترك",d:["ذاكرة النظام المدمجة","الإنترنت المحمول الآمن","شريحة الذاكرة الذكية","وحدة الاتصال الآمن","معرّف الجهاز الفريد"]},
+  // تاريخ إسلامي
+  {c:"islam",q:"كم كان عمر النبي ﷺ عند نزول الوحي؟",a:"أربعون سنة",d:["خمس وثلاثون سنة","خمس وأربعون سنة","ثلاثون سنة","خمسون سنة","ثلاث وعشرون سنة"]},
+  {c:"islam",q:"ما أول مسجد بُني في الإسلام؟",a:"مسجد قباء",d:["المسجد النبوي","مسجد القبلتين","مسجد الفتح","مسجد الجمعة","مسجد الغمامة"]},
+  {c:"islam",q:"من أول مؤذن في الإسلام؟",a:"بلال بن رباح",d:["عبد الله بن مسعود","سلمان الفارسي","أبو ذر الغفاري","زيد بن حارثة","عمار بن ياسر"]},
+  {c:"islam",q:"ما اسم ناقة النبي ﷺ التي بركت عند موضع المسجد النبوي؟",a:"القصواء",d:["الشهباء","الريحانة","البيضاء","الغيداء","المهرية"]},
+  {c:"islam",q:"كم كان عدد المسلمين في غزوة بدر تقريباً؟",a:"ثلاثمئة وبضعة عشر",d:["ألف","سبعمئة","مئة وعشرون","ثلاثة آلاف","خمسمئة"]},
+  {c:"islam",q:"من الصحابي الملقب بـ«أمين هذه الأمة»؟",a:"أبو عبيدة بن الجراح",d:["عثمان بن عفان","سعد بن أبي وقاص","خالد بن الوليد","عمر بن الخطاب","حذيفة بن اليمان"]},
+  {c:"islam",q:"في عهد أي خليفة نُسخت المصاحف وأُرسلت إلى الأمصار؟",a:"عثمان بن عفان",d:["أبو بكر الصديق","علي بن أبي طالب","عمر بن الخطاب","معاوية بن أبي سفيان","عمر بن عبد العزيز"]},
+  {c:"islam",q:"ما أطول سورة في القرآن الكريم؟",a:"البقرة",d:["آل عمران","النساء","الأنعام","المائدة","الأعراف"]},
+  {c:"islam",q:"ما السورة الوحيدة التي لا تبدأ بالبسملة؟",a:"التوبة",d:["الأنفال","الكهف","الفاتحة","يس","الإخلاص"]},
+  {c:"islam",q:"من القائد الذي استعاد القدس عام 1187؟",a:"صلاح الدين الأيوبي",d:["نور الدين زنكي","الظاهر بيبرس","عماد الدين زنكي","قطز","ألب أرسلان"]},
+  {c:"islam",q:"في أي معركة هزم المماليكُ المغولَ عام 1260؟",a:"عين جالوت",d:["حطين","اليرموك","ملاذكرد","الزلاقة","القادسية"]},
+  {c:"islam",q:"من العالم المسلم الذي يُعدّ مؤسس علم الجبر؟",a:"الخوارزمي",d:["ابن سينا","البيروني","ابن الهيثم","الرازي","جابر بن حيان"]},
+  // رياضة
+  {c:"sport",q:"كم لاعباً لكل فريق داخل ملعب كرة القدم؟",a:"11",d:["9","12","10","13","8"]},
+  {c:"sport",q:"أي دولة فازت بأول كأس عالم عام 1930؟",a:"الأوروغواي",d:["البرازيل","الأرجنتين","إيطاليا","ألمانيا","إنجلترا"]},
+  {c:"sport",q:"أي دولة ستستضيف كأس العالم 2034؟",a:"السعودية",d:["قطر","المغرب","مصر","أستراليا","الإمارات"]},
+  {c:"sport",q:"كم مدة الربع الواحد في مباريات دوري NBA؟",a:"12 دقيقة",d:["10 دقائق","15 دقيقة","20 دقيقة","8 دقائق","25 دقيقة"]},
+  {c:"sport",q:"ما طول سباق الماراثون؟",a:"42.195 كم",d:["40 كم","50 كم","30 كم","45.5 كم","21 كم"]},
+  {c:"sport",q:"في أي رياضة يُستخدم مصطلح «بيردي»؟",a:"الغولف",d:["التنس","البيسبول","الكريكيت","البولينغ","الهوكي"]},
+  {c:"sport",q:"كم حلقة في شعار الألعاب الأولمبية؟",a:"خمس حلقات",d:["ست حلقات","سبع حلقات","أربع حلقات","ثلاث حلقات","ثماني حلقات"]},
+  {c:"sport",q:"أي نادٍ سعودي يُلقّب بـ«الزعيم»؟",a:"الهلال",d:["النصر","الاتحاد","الشباب","الأهلي","الفتح"]},
+  {c:"sport",q:"ما الرياضة الوطنية لليابان؟",a:"السومو",d:["الكاراتيه","الجودو","الكيندو","الآيكيدو","المصارعة الحرة"]},
+  {c:"sport",q:"كم نقطة تُحتسب للرمية من خارج القوس في كرة السلة؟",a:"ثلاث نقاط",d:["نقطتان","أربع نقاط","خمس نقاط","نقطة واحدة","ست نقاط"]},
+  {c:"sport",q:"أين أقيمت أول ألعاب أولمبية حديثة عام 1896؟",a:"اليونان",d:["فرنسا","بريطانيا","إيطاليا","الولايات المتحدة","ألمانيا"]},
+  {c:"sport",q:"كم لاعباً لكل فريق داخل ملعب الكرة الطائرة؟",a:"ستة",d:["خمسة","سبعة","أربعة","ثمانية","عشرة"]},
+  // أكل وطبخ
+  {c:"food",q:"كان الكاتشب في أصله الآسيوي صلصة مصنوعة من ماذا؟",a:"السمك المخمّر",d:["الطماطم المجففة","الفطر","التمر الهندي","الجوز المطحون","المانجو"]},
+  {c:"food",q:"ما الدولة الأكثر إنتاجاً للتمور في العالم؟",a:"مصر",d:["السعودية","العراق","إيران","الجزائر","الإمارات"]},
+  {c:"food",q:"ما الفاكهة التي تحمل بذورها على سطحها الخارجي؟",a:"الفراولة",d:["التوت الأسود","الكيوي","الرمان","التين","البطيخ"]},
+  {c:"food",q:"ما أغلى بهار في العالم؟",a:"الزعفران",d:["الهيل","الفانيليا","القرفة","الكركم","الزنجبيل"]},
+  {c:"food",q:"من أي بلد انتشر نبات البن في الأصل؟",a:"إثيوبيا",d:["اليمن","البرازيل","كولومبيا","الهند","تركيا"]},
+  {c:"food",q:"من أي حبوب تُصنع الطحينة؟",a:"السمسم",d:["الحمص","الفستق","بذور الكتان","دوار الشمس","اللوز"]},
+  {c:"food",q:"أي خضار كان لونها الشائع قديماً بنفسجياً قبل أن تشتهر بالبرتقالي؟",a:"الجزر",d:["البطاطا الحلوة","اللفت","الشمندر","الملفوف","الباذنجان"]},
+  {c:"food",q:"من أي حبوب يُصنع البرغل؟",a:"القمح",d:["الشعير","الأرز","الذرة","الدخن","الشوفان"]},
+  {c:"food",q:"ما المادة التي تجعل الفلفل الحار حاراً؟",a:"الكابسيسين",d:["الكافيين","الكركمين","الأليسين","التانين","المنثول"]},
+  {c:"food",q:"ما الطعام الذي وُجد صالحاً للأكل في مقابر الفراعنة بعد آلاف السنين؟",a:"العسل",d:["التمر","الملح المدخن","الجبن","زيت الزيتون","الخبز اليابس"]},
+  {c:"food",q:"كيف يُصنَّف الموز نباتياً؟",a:"نوع من التوت",d:["نوع من الخضار","نوع من الحبوب","نوع من الحمضيات","نوع من المكسرات","نوع من البقوليات"]},
+  {c:"food",q:"من أي دولة أصل البيتزا؟",a:"إيطاليا",d:["اليونان","فرنسا","إسبانيا","الولايات المتحدة","تركيا"]},
+  // حيوانات
+  {c:"animals",q:"ما أسرع حيوان بري؟",a:"الفهد",d:["الغزال","الحصان العربي","الأسد","الذئب","النعامة"]},
+  {c:"animals",q:"كم حجرة في معدة البقرة؟",a:"أربع حجرات",d:["حجرتان","ست حجرات","حجرة واحدة","ثلاث حجرات","ثماني حجرات"]},
+  {c:"animals",q:"أي حيوان ثديي كبير لا يستطيع القفز؟",a:"الفيل",d:["وحيد القرن","الزرافة","الدب","الجاموس","الجمل"]},
+  {c:"animals",q:"أين يخزّن الجمل الدهون؟",a:"في السنام",d:["في الكبد","في الأرجل","في الذيل","في الرقبة","في البطن"]},
+  {c:"animals",q:"ما لون جلد الدب القطبي تحت فروه الأبيض؟",a:"أسود",d:["وردي","أبيض","رمادي","بني","أزرق"]},
+  {c:"animals",q:"كم ساعة ينام الكوالا يومياً تقريباً؟",a:"20 ساعة",d:["8 ساعات","12 ساعة","4 ساعات","6 ساعات","10 ساعات"]},
+  {c:"animals",q:"ما الطائر الوحيد القادر على الطيران إلى الخلف؟",a:"الطائر الطنّان",d:["السنونو","الخطاف","الهدهد","العصفور الدوري","البطريق"]},
+  {c:"animals",q:"ما أكبر حيوان عاش على الأرض على الإطلاق؟",a:"الحوت الأزرق",d:["الماموث","الأرجنتينوصور","القرش الحوتي","الفيل الإفريقي","التيرانوصور"]},
+  {c:"animals",q:"أي حيوان من غير القردة يملك بصمات أصابع يصعب تمييزها عن بصمات الإنسان؟",a:"الكوالا",d:["الراكون","السنجاب","الكنغر","القندس","الأبوسوم"]},
+  {c:"animals",q:"كم رِجلاً للعنكبوت؟",a:"ثماني أرجل",d:["ست أرجل","عشر أرجل","أربع أرجل","اثنتا عشرة رجلاً","ست عشرة رجلاً"]},
+  {c:"animals",q:"ماذا يُسمّى صغير الأسد؟",a:"الشبل",d:["الجرو","الحِوار","المهر","العجل","الحمل"]},
+  {c:"animals",q:"أي حيوان ينام بنصف دماغه بينما يبقى النصف الآخر يقظاً؟",a:"الدلفين",d:["البومة","الحصان","الزرافة","السلحفاة","الخفاش"]},
+  // غرائب
+  {c:"weird",q:"كم مرة يرمش الإنسان في اليوم تقريباً؟",a:"نحو 15 ألف مرة",d:["500 مرة","مليون مرة","ألفا مرة","50 مرة","100 ألف مرة"]},
+  {c:"weird",q:"ما المعلم الشهير الذي يُشاع خطأً أنه يُرى من القمر بالعين المجردة؟",a:"سور الصين العظيم",d:["الأهرامات","قناة السويس","قصر فرساي","جسر البوابة الذهبية","برج إيفل"]},
+  {c:"weird",q:"في أي دولة يفوق عدد الأغنام عدد السكان بكثير؟",a:"نيوزيلندا",d:["هولندا","سويسرا","بلجيكا","اليابان","كندا"]},
+  {c:"weird",q:"على أي كوكب يكون اليوم أطول من السنة؟",a:"الزهرة",d:["المريخ","نبتون","المشتري","زحل","أورانوس"]},
+  {c:"weird",q:"كم يستغرق ضوء القمر ليصل إلى الأرض تقريباً؟",a:"ثانية واحدة",d:["دقيقة واحدة","ساعة","يوم كامل","10 ثوانٍ","نصف ساعة"]},
+  {c:"weird",q:"ما الحرف الإنجليزي الوحيد الذي لا يظهر في أسماء الولايات الأمريكية الخمسين؟",a:"Q",d:["Z","X","J","K","W"]},
+  {c:"weird",q:"كم مفتاحاً في البيانو القياسي؟",a:"88",d:["72","100","64","96","52"]},
+  {c:"weird",q:"ما اسم أول حيوان دار حول الأرض في الفضاء؟",a:"الكلبة لايكا",d:["القرد هام","القطة فيليسيت","الشمبانزي إينوس","الفأر جيري","السلحفاة سبوتي"]},
+  {c:"weird",q:"كم عيناً للنحلة؟",a:"خمس عيون",d:["عينان","ثماني عيون","عين واحدة","أربع عيون","مئة عين"]},
+  {c:"weird",q:"أي حيوان يملك أكبر عين في المملكة الحيوانية؟",a:"الحبار العملاق",d:["الحوت الأزرق","البومة","النسر","الحصان","الفيل"]},
+  {c:"weird",q:"ما نسبة الماء في جسم الإنسان البالغ تقريباً؟",a:"60%",d:["30%","90%","20%","80%","10%"]},
+  {c:"weird",q:"أي دولة تملك أكبر عدد من المناطق الزمنية بفضل أقاليمها حول العالم؟",a:"فرنسا",d:["روسيا","الولايات المتحدة","الصين","أستراليا","بريطانيا"]},
+];
+const CATS = {lang:"لغة وأدب",hist:"تاريخ",islam:"تاريخ إسلامي",geo:"جغرافيا",sci:"علوم",gulf:"السعودية والخليج",tech:"تقنية",sport:"رياضة",food:"أكل وطبخ",animals:"حيوانات",weird:"غرائب"};
+const LET = ["أ","ب","ج","د","هـ","و","ز","ح","ط","ي","ك"];
+
+const S = {
+  screen:"home",
+  players:["محمد","سارة"], cats:Object.keys(CATS), rounds:5, timer:45, used:[], deadline:0,
+  scores:{}, round:0, deck:[], cur:null,
+  turn:0, fakes:{}, picks:{}, options:[], gains:{}, err:""
+};
+try{const saved=JSON.parse(localStorage.getItem("tamweeh-setup")||"null");if(saved){S.players=saved.players||S.players;S.cats=(saved.cats||[]).filter(k=>k in CATS).concat(saved.v===2?[]:Object.keys(CATS)).filter((k,i,a)=>a.indexOf(k)===i);S.rounds=saved.rounds||S.rounds;S.timer=saved.timer??S.timer;}}catch(e){}
+
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const norm=s=>String(s).trim().toLowerCase()
+  .replace(/[ً-ْـ]/g,"").replace(/[إأآا]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+  .replace(/(^|\s)ال/g,"$1").replace(/[^\p{L}\p{N}]+/gu,"");
+
+const mascot=`<svg class="mascot" viewBox="0 0 96 96" aria-hidden="true">
+  <rect x="10" y="8" width="76" height="80" rx="16" fill="var(--pom)"/>
+  <rect x="20" y="18" width="56" height="40" rx="8" fill="var(--paper)"/>
+  <path d="M28 34 q6 -6 12 0" stroke="var(--ink)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="62" cy="33" r="5" fill="var(--ink)"/>
+  <path d="M34 46 q14 8 28 0" stroke="var(--ink)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="24" y="66" width="18" height="6" rx="3" fill="var(--saffron)"/><rect x="30" y="60" width="6" height="18" rx="3" fill="var(--saffron)"/>
+  <circle cx="62" cy="68" r="5" fill="var(--sky)"/><circle cx="72" cy="74" r="5" fill="var(--mint)"/>
+</svg>`;
+
+function header(){
+  let r="";
+  if(["choose","handoff","write","pick","reveal"].includes(S.screen)) r=`<span class="round-pill">الجولة ${S.round} من ${S.rounds}</span>`;
+  else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.r>0&&O.g.ph!=="final") r=`<span class="round-pill">الجولة ${O.g.r} من ${O.g.rs}</span>`;
+  return `<div class="brand"><div><div class="logo">تمويه</div><div class="tag">اكتب كذبة مقنعة، واكشف الحقيقة</div></div>${r}</div>`;
+}
+
+function render(){
+  const ae=document.activeElement,fid=ae&&app.contains(ae)&&ae.id?ae.id:null,keep={};
+  let ss=null,se=null;try{if(fid){ss=ae.selectionStart;se=ae.selectionEnd;}}catch(e){}
+  app.querySelectorAll("input[data-keep]").forEach(i=>keep[i.id]=i.value);
+  const v = VIEWS[S.screen]();
+  const foot = S.screen==="online"?"نموذج أولي · كل لاعب من جواله":S.screen==="home"?"نموذج أولي":"نموذج أولي · جهاز واحد يتنقل بين اللاعبين";
+  app.innerHTML = header()+v+`<div class="foot">${foot}</div>`;
+  Object.entries(keep).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&!el.value&&val) el.value=val;});
+  const fe=fid&&document.getElementById(fid);
+  if(fe){fe.focus();try{if(ss!=null) fe.setSelectionRange(ss,se);}catch(e){}}
+  else{const f=app.querySelector("[autofocus]"); if(f) f.focus();}
+  tick();
+}
+let iv=null;
+function startTimer(){stopTimer(); if(!S.timer) return; S.deadline=Date.now()+S.timer*1000; iv=setInterval(tick,250);}
+function stopTimer(){clearInterval(iv); iv=null; S.deadline=0;}
+function tick(){
+  if(!S.deadline) return;
+  const left=Math.max(0,S.deadline-Date.now()), sec=Math.ceil(left/1000), frac=left/(S.timer*1000);
+  const fl=document.getElementById("tfill"), sc=document.getElementById("tsec");
+  if(fl){fl.style.width=(frac*100)+"%"; fl.className="fill"+(frac<.25?" danger":frac<.5?" warn":"");}
+  if(sc) sc.textContent=sec;
+  if(left<=0){stopTimer(); if(S.screen==="write") submitFake(true); else if(S.screen==="pick") pick(-1);}
+}
+
+const VIEWS={
+  home(){
+    return `<section class="card">
+      <h1>كيف تحبون تلعبون؟</h1>
+      <div class="muted">سؤال غريب، كل واحد يكتب كذبة مقنعة، والكل يحاول يكشف الحقيقة.</div>
+    </section>
+    <button class="btn" data-go="online">العب من جوالك</button>
+    <div class="muted" style="text-align:center">كل لاعب على جواله، بنفس الرابط ورمز الغرفة</div>
+    <button class="btn pom" data-go="setup">جوال واحد للجميع</button>
+    <div class="muted" style="text-align:center">جهاز واحد يتنقل بين اللاعبين</div>`;
+  },
+  online(){ return onlineView(); },
+  setup(){
+    const pl=S.players.map((p,i)=>`<div class="player-row">
+      <input type="text" id="p${i}" value="${esc(p)}" maxlength="16" aria-label="اسم اللاعب ${i+1}" data-pi="${i}">
+      ${S.players.length>1?`<button class="icon-btn" data-del="${i}" aria-label="حذف اللاعب">✕</button>`:""}</div>`).join("");
+    const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
+    const rd=[3,5,8,10].map(n=>`<button class="chip" data-rounds="${n}" aria-pressed="${S.rounds===n}">${n} جولات</button>`).join("");
+    const tm=[[30,"30 ثانية"],[45,"45 ثانية"],[60,"دقيقة"],[0,"بدون وقت"]].map(([n,l])=>`<button class="chip" data-timer="${n}" aria-pressed="${S.timer===n}">${l}</button>`).join("");
+    return `<section class="card">
+      <h1>لعبة جديدة</h1>
+      <ol class="rules">
+        <li>في كل جولة يختار لاعب فئة السؤال بالتناوب.</li>
+        <li>يظهر سؤال غريب، ويكتب كل لاعب إجابة مزيفة مقنعة دون أن يراها أحد.</li>
+        <li>تُخلط الإجابات المزيفة مع الصحيحة، ويختار كل لاعب ما يظنه الحقيقة.</li>
+        <li>نقطتان لمن يكشف الحقيقة، ونقطة لك عن كل لاعب يقع في كذبتك.</li>
+      </ol>
+    </section>
+    <section class="card">
+      <div class="eyebrow">اللاعبون (${S.players.length} من 8)</div>
+      <div class="players">${pl}</div>
+      ${S.players.length<8?`<button class="btn ghost" id="add">+ أضف لاعباً</button>`:""}
+    </section>
+    <section class="card">
+      <div class="eyebrow">الفئات المتاحة في اللعبة</div><div class="chips">${ch}</div>
+      <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
+      <div class="eyebrow">الوقت لكل لاعب</div><div class="chips">${tm}</div>
+    </section>
+    <div class="err" role="alert">${esc(S.err)}</div>
+    <button class="btn" id="start">ابدأ اللعب</button>
+    <button class="btn ghost" data-go="home">رجوع</button>`;
+  },
+  choose(){
+    const who=S.players[(S.round-1)%S.players.length];
+    const tiles=S.cats.map(k=>{const left=remaining(k);
+      return `<button class="cat-tile" data-choose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"انتهت أسئلتها"}</small></button>`;}).join("");
+    return `<section class="card">
+      <div class="eyebrow">اختيار الفئة</div>
+      <h2>دور ${esc(who)} يختار فئة هذه الجولة</h2>
+      <div class="cat-grid">${tiles}</div>
+    </section>
+    <button class="btn ghost" data-choose="random">اختيار عشوائي</button>`;
+  },
+  handoff(){
+    const who=S.players[S.turn];
+    const phase=S.phase==="write"?"دورك لتكتب كذبتك":"دورك لتختار الإجابة";
+    const prog=S.players.map((_,i)=>`<span class="${i<S.turn?"done":""}"></span>`).join("");
+    return `<section class="card handoff">
+      ${mascot}
+      <div class="muted">سلّم الجوال إلى</div>
+      <div class="big-name">${esc(who)}</div>
+      <div class="muted">${phase}. لا تدع أحداً يرى الشاشة.</div>
+      <div class="progress" aria-label="التقدم">${prog}</div>
+    </section>
+    <button class="btn" id="ready" autofocus>أنا ${esc(who)}، جاهز</button>`;
+  },
+  write(){
+    const who=S.players[S.turn];
+    return `<section class="card">
+      ${S.timer?`<div class="timer"><div class="bar"><div class="fill" id="tfill"></div></div><span class="sec" id="tsec">${S.timer}</span></div>`:""}
+      <span class="cat-chip">${CATS[S.cur.c]}</span>
+      <div class="q">${esc(S.cur.q)}</div>
+      <label for="fake">${esc(who)}، اكتب إجابة مزيفة تخدع بها الآخرين</label>
+      <input type="text" id="fake" maxlength="60" autocomplete="off" autofocus placeholder="كذبة مقنعة…" value="${esc(S.err?S.draft||"":"")}">
+      <div class="err" role="alert">${esc(S.err)}</div>
+      <button class="btn" id="submitFake">أرسل إجابتي</button>
+    </section>`;
+  },
+  pick(){
+    const who=S.players[S.turn];
+    const opts=S.options.map((o,i)=>Array.isArray(o.owner)&&o.owner.includes(S.turn)?"":
+      `<button class="opt" data-pick="${i}"><span class="letter">${LET[i]||i+1}</span><span>${esc(o.text)}</span></button>`).join("");
+    return `<section class="card">
+      ${S.timer?`<div class="timer"><div class="bar"><div class="fill" id="tfill"></div></div><span class="sec" id="tsec">${S.timer}</span></div>`:""}
+      <span class="cat-chip">${CATS[S.cur.c]}</span>
+      <div class="q">${esc(S.cur.q)}</div>
+      <div class="muted">${esc(who)}، أين الحقيقة؟ (إجابتك مخفية عنك)</div>
+      <div class="opts">${opts}</div>
+    </section>`;
+  },
+  reveal(){
+    const items=S.options.map((o,i)=>{
+      const pickers=Object.entries(S.picks).filter(([,v])=>v===i).map(([p])=>S.players[p]);
+      const owner=o.owner==null?"":o.owner==="house"?"فخ اللعبة":`كذبة ${o.owner.map(q=>esc(S.players[q])).join(" و ")}`;
+      return {o,pickers,owner,i};
+    }).sort((a,b)=>(b.o.owner==="true")-(a.o.owner==="true")||b.pickers.length-a.pickers.length);
+    const list=items.map(({o,pickers,owner})=>{
+      const t=o.owner==="true";
+      return `<div class="rv ${t?"true":""}">
+        <span class="badge ${t?"t":"f"}">${t?"الحقيقة":owner}</span>
+        <div class="ans">${esc(o.text)}</div>
+        <div class="who">${pickers.length?`اختارها: <b>${pickers.map(esc).join("، ")}</b>`:"لم يخترها أحد"}</div>
+      </div>`;}).join("");
+    return `<section class="card">
+      <span class="cat-chip">${CATS[S.cur.c]}</span>
+      <div class="q">${esc(S.cur.q)}</div>
+      <div class="reveal-list">${list}</div>
+      ${late()}
+    </section>
+    ${scoreCard(true)}
+    <button class="btn" id="next" autofocus>${S.round>=S.rounds?"النتيجة النهائية":"الجولة التالية"}</button>`;
+  },
+  final(){
+    const ranked=rank();
+    const top=ranked[0], tie=ranked.filter(p=>p.s===top.s).length>1;
+    return `<section class="card handoff">
+      ${mascot}
+      <div class="muted">${tie?"تعادل في القمة!":"الفائز"}</div>
+      <div class="big-name">${tie?ranked.filter(p=>p.s===top.s).map(p=>esc(p.n)).join(" و "):esc(top.n)}</div>
+      <div class="muted">${top.s} نقطة</div>
+    </section>
+    ${scoreCard(false)}
+    <div class="row"><button class="btn" id="again">جولة جديدة بنفس اللاعبين</button><button class="btn ghost" id="home">إعدادات جديدة</button></div>`;
+  }
+};
+
+function late(){
+  const nf=S.players.filter((_,p)=>S.fakes[p]==null), np=S.players.filter((_,p)=>S.picks[p]===-1);
+  const out=[]; if(nf.length&&S.players.length>1) out.push(`لم يكتب كذبة في الوقت: ${nf.map(esc).join("، ")}`);
+  if(np.length) out.push(`انتهى وقته قبل الاختيار: ${np.map(esc).join("، ")}`);
+  return out.map(t=>`<div class="muted">${t}</div>`).join("");
+}
+function remaining(k){return BANK.filter((q,i)=>q.c===k&&!S.used.includes(i)).length;}
+function rank(){return S.players.map((n,i)=>({n,i,s:S.scores[i]||0,g:S.gains[i]||0})).sort((a,b)=>b.s-a.s);}
+function scoreCard(withGain){
+  const r=rank();
+  return `<section class="card"><div class="eyebrow">الترتيب</div><div class="score-list">${
+    r.map((p,k)=>`<div class="sc ${k===0&&p.s>0?"lead":""}"><span class="rank">${k+1}</span><span class="nm">${esc(p.n)}</span>${withGain&&p.g?`<span class="gain">+${p.g}</span>`:""}<span class="pts">${p.s}</span></div>`).join("")
+  }</div></section>`;
+}
+
+function startGame(){
+  const names=S.players.map(s=>s.trim());
+  if(names.some(n=>!n)){S.err="اكتب اسم كل لاعب، أو احذف الخانة الفارغة.";return render();}
+  if(new Set(names).size!==names.length){S.err="كل لاعب يحتاج اسماً مختلفاً.";return render();}
+  if(!S.cats.length){S.err="اختر فئة واحدة على الأقل.";return render();}
+  S.players=names;
+  if(S.used.length+S.rounds>BANK.filter(q=>S.cats.includes(q.c)).length) S.used=[];
+  const pool=BANK.filter((q,i)=>S.cats.includes(q.c)&&!S.used.includes(i));
+  if(pool.length<S.rounds){S.err=`الفئات المختارة فيها ${pool.length} أسئلة فقط. اختر فئات أكثر أو جولات أقل.`;return render();}
+  try{localStorage.setItem("tamweeh-setup",JSON.stringify({v:2,players:S.players,cats:S.cats,rounds:S.rounds,timer:S.timer}));}catch(e){}
+  S.err=""; S.scores={}; S.round=0;
+  nextRound();
+}
+function nextRound(){
+  S.round++; S.fakes={}; S.picks={}; S.gains={}; S.err=""; S.screen="choose"; render();
+}
+function chooseCat(k){
+  if(k==="random"){const av=S.cats.filter(remaining);k=av[Math.floor(Math.random()*av.length)];}
+  const idx=shuffle(BANK.map((q,i)=>i).filter(i=>BANK[i].c===k&&!S.used.includes(i)))[0];
+  if(idx==null) return;
+  S.used.push(idx); S.cur=BANK[idx];
+  S.phase="write"; S.turn=0; S.screen="handoff"; render();
+}
+function sim(a,b){return a===b||(Math.min(a.length,b.length)>3&&(a.includes(b)||b.includes(a)));}
+function fakeError(v){
+  if(v.length<2) return "اكتب إجابة من حرفين على الأقل.";
+  if(sim(norm(v),norm(S.cur.a))) return "هذه قريبة جداً من الإجابة الصحيحة! اكتب كذبة مختلفة.";
+  return "";
+}
+function submitFake(timedOut){
+  const el=document.getElementById("fake");
+  const v=((el&&el.value)||"").trim(); S.draft=v;
+  const er=fakeError(v);
+  if(er&&!timedOut){S.err=er;return render();}
+  stopTimer();
+  if(!er) S.fakes[S.turn]=v;
+  S.err=""; S.draft="";
+  if(S.turn<S.players.length-1){S.turn++;S.screen="handoff";}
+  else buildOptions();
+  render();
+}
+function buildOptions(){
+  // كذبات متشابهة من لاعبين مختلفين تُدمج في خيار واحد يُنسب لهم جميعاً
+  const groups=[];
+  Object.entries(S.fakes).forEach(([p,t])=>{const k=norm(t);const g=groups.find(g=>sim(g.k,k));
+    if(g) g.owner.push(+p); else groups.push({k,text:t,owner:[+p]});});
+  const o=[{text:S.cur.a,owner:"true"},...groups.map(g=>({text:g.text,owner:g.owner}))];
+  // فخاخ اللعبة تُختار بعد كتابة الجميع، ويُستبعد أي فخ يشبه كذبة لاعب
+  const free=shuffle(S.cur.d).filter(d=>!groups.some(g=>sim(g.k,norm(d))));
+  free.slice(0,Math.min(free.length,Math.max(1,4-o.length))).forEach(t=>o.push({text:t,owner:"house"}));
+  S.options=shuffle(o); S.phase="pick"; S.turn=0; S.screen="handoff";
+}
+function pick(i){
+  stopTimer();
+  S.picks[S.turn]=i;
+  if(S.turn<S.players.length-1){S.turn++;S.screen="handoff";render();return;}
+  score(); S.screen="reveal"; render();
+}
+function score(){
+  S.players.forEach((_,p)=>{
+    let g=0; const ch=S.options[S.picks[p]];
+    if(ch&&ch.owner==="true") g+=2;
+    g+=Object.entries(S.picks).filter(([q,v])=>+q!==p&&v>=0&&Array.isArray(S.options[v].owner)&&S.options[v].owner.includes(p)).length;
+    S.gains[p]=g; S.scores[p]=(S.scores[p]||0)+g;
+  });
+}
+
+app.addEventListener("click",e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.go){stopTimer();S.screen=t.dataset.go;if(t.dataset.go==="online"&&!O.R){O.screen="menu";O.err="";}render();return;}
+  if(S.screen==="online"&&onlineClick(t)) return;
+  if(t.id==="add"){S.players.push("");render();app.querySelector(`#p${S.players.length-1}`)?.focus();}
+  else if(t.dataset.del!=null){S.players.splice(+t.dataset.del,1);render();}
+  else if(t.dataset.cat){const k=t.dataset.cat;S.cats=S.cats.includes(k)?S.cats.filter(c=>c!==k):[...S.cats,k];render();}
+  else if(t.dataset.rounds){S.rounds=+t.dataset.rounds;render();}
+  else if(t.dataset.timer!=null){S.timer=+t.dataset.timer;render();}
+  else if(t.dataset.choose) chooseCat(t.dataset.choose);
+  else if(t.id==="start") startGame();
+  else if(t.id==="ready"){S.screen=S.phase;startTimer();render();}
+  else if(t.id==="submitFake") submitFake(false);
+  else if(t.dataset.pick!=null) pick(+t.dataset.pick);
+  else if(t.id==="next"){ if(S.round>=S.rounds){S.screen="final";render();} else nextRound(); }
+  else if(t.id==="again") startGame();
+  else if(t.id==="home"){stopTimer();S.screen="setup";render();}
+});
+app.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.pi!=null) S.players[+t.dataset.pi]=t.value;
+  else if(t.id==="oname") O.name=t.value;
+  else if(t.id==="ocode") O.codeIn=t.value;
+});
+app.addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  const id=e.target.id;
+  if(id==="fake"){e.preventDefault();submitFake(false);}
+  else if(id==="ofake"){e.preventDefault();oSendFake();}
+  else if(id==="ocode"){e.preventDefault();enterRoom(O.codeIn.trim().toLowerCase(),false);}
+});
+
+
+// ================= الخادم: Firebase Realtime Database =================
+// ضع إعدادات مشروعك هنا (من Firebase Console ← Project settings ← Your apps)
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDYhPDMt0NtvaWfcA7uh3rHzWtnKZ5wqGE",
+  authDomain: "tamweeh-55dc3.firebaseapp.com",
+  databaseURL: "https://tamweeh-55dc3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tamweeh-55dc3",
+  storageBucket: "tamweeh-55dc3.firebasestorage.app",
+  messagingSenderId: "311069677276",
+  appId: "1:311069677276:web:201e14f57cae678572c619"
+};
+
+let fdb=null;
+function fbInit(){
+  if(fdb) return fdb;
+  if(!FIREBASE_CONFIG||!window.firebase) return null;
+  try{ firebase.initializeApp(FIREBASE_CONFIG); fdb=firebase.database(); }catch(e){ fdb=null; }
+  return fdb;
+}
+let myPid=null;
+try{myPid=sessionStorage.getItem("tmw-pid");}catch(e){}
+if(!myPid){myPid=Math.random().toString(36).slice(2,12);try{sessionStorage.setItem("tmw-pid",myPid);}catch(e){}}
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))]);
+function fbRoomApi(){
+  const db=fbInit(); if(!db) return null;
+  return {join: async(name)=>{
+    const base=db.ref("rooms/"+name+"/peers"), me=base.child(myPid);
+    await withTimeout(me.onDisconnect().remove(),10000);
+    await withTimeout(me.update({joined:firebase.database.ServerValue.TIMESTAMP}),10000);
+    let off=null;
+    return {
+      presence:(patch)=>me.update(patch),
+      onPeers:(h,err)=>{
+        const cb=snap=>{const v=snap.val()||{};
+          const peers=Object.entries(v).map(([pid,p])=>({peer:pid,sameTab:pid===myPid,isMe:pid===myPid,kind:"viewer",presence:p||{}}))
+            .sort((a,b)=>(a.presence.joined||0)-(b.presence.joined||0));
+          h({peers});};
+        base.on("value",cb,e=>err&&err(e)); off=()=>base.off("value",cb); return off;
+      },
+      leave: async()=>{ if(off) off(); await me.remove(); }
+    };
+  }};
+}
+// Firebase يحذف المصفوفات الفارغة ويحوّل بعض الكائنات، فنعيد الحالة إلى شكلها المتوقع
+function normG(g){
+  if(!g) return g;
+  const A=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);
+  ["pl","pp","sc","dn","nf","np","gn","cats","q"].forEach(k=>{ if(g[k]!=null) g[k]=A(g[k]); });
+  g.pl=g.pl||[];g.pp=g.pp||[];g.sc=g.sc||[];g.dn=g.dn||[];g.nf=g.nf||[];g.np=g.np||[];g.bad=g.bad||{};
+  if(g.cats) g.cats=g.cats.map(A);
+  if(g.op) g.op=A(g.op).map(x=>{x=A(x);return [x[0], x[1]==null?[]:(typeof x[1]==="string"?x[1]:A(x[1])), A(x[2])];});
+  return g;
+}
+
+// ================= اللعب أونلاين: المضيف يدير اللعبة وينشر حالتها عبر غرفة باسم الرمز =================
+const O={gs:"",screen:"menu",name:"",codeIn:"",code:"",host:false,R:null,g:null,peers:[],key:"",deadline:0,myA:0,sentA:0,err:"",busy:false,hostGoneAt:0};
+const HS={};
+let roomNs, hostIv=null, clientIv=null, lastPub="";
+try{O.name=localStorage.getItem("tamweeh-name")||"";}catch(e){}
+
+async function roomApi(){
+  if(roomNs!==undefined&&roomNs) return roomNs;
+  roomNs=fbRoomApi();
+  return roomNs;
+}
+const CODE_CH="abcdefghjkmnpqrstuvwxyz23456789";
+const newCode=()=>Array.from({length:5},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join("");
+const remainingIn=(used,k)=>BANK.filter((q,i)=>q.c===k&&!used.includes(i)).length;
+function pres(peer){const x=O.peers.find(q=>q.peer===peer);return x&&x.presence?x.presence:null;}
+function myPeer(){const m=O.peers.find(p=>p.sameTab);return m?m.peer:null;}
+function myIdx(){const g=O.g,me=myPeer();return g&&g.pp&&me?g.pp.indexOf(me):-1;}
+
+async function enterRoom(code,host){
+  const nm=O.name.trim();
+  if(!nm){O.err="اكتب اسمك أولاً.";return render();}
+  if(!host&&!/^[a-z0-9]{5}$/.test(code)){O.err="الرمز من 5 أحرف وأرقام، كما يظهر عند المضيف.";return render();}
+  if(host&&!S.cats.length){O.err="اختر فئة واحدة على الأقل.";return render();}
+  O.err="";O.busy=true;render();
+  const room=await roomApi();
+  if(!room){O.busy=false;O.err="الخادم غير مضبوط بعد: أضف إعدادات Firebase في الملف.";return render();}
+  try{ O.R=await room.join("tmw-"+code); }
+  catch(e){O.busy=false;O.err="تعذّر الاتصال بالخادم. تأكد من الإنترنت وحاول مرة أخرى.";return render();}
+  try{localStorage.setItem("tamweeh-name",nm);}catch(e){}
+  O.busy=false;O.code=code;O.host=host;O.screen="game";O.g=null;O.gs="";O.key="";O.hostGoneAt=Date.now();
+  if(host){
+    Object.assign(HS,{phase:"lobby",players:[],scores:{},round:0,rounds:S.rounds,timer:S.timer,cats:S.cats.slice(),used:[],deadline:0});
+    lastPub="";
+    hostIv=setInterval(hostStep,500);
+  }
+  O.R.presence({n:nm.slice(0,16),h:host?1:0}).catch(()=>{});
+  O.R.onPeers(ch=>{O.peers=ch.peers;onRoom();},()=>{O.err="انقطع الاتصال بالغرفة.";render();});
+  clientIv=setInterval(clientTick,250);
+  render();
+}
+function leaveRoom(){
+  clearInterval(hostIv);clearInterval(clientIv);hostIv=clientIv=null;
+  if(O.R) O.R.leave().catch(()=>{});
+  Object.assign(O,{gs:"",screen:"menu",R:null,g:null,peers:[],host:false,code:"",key:"",deadline:0,err:""});
+  S.screen="online";render();
+}
+
+function onRoom(){
+  if(O.host) hostStep();
+  const hp=O.peers.find(p=>p.presence&&p.presence.h&&p.presence.g);
+  const g=hp?hp.presence.g:null;
+  if(g) O.hostGoneAt=0; else if(!O.hostGoneAt) O.hostGoneAt=Date.now();
+  if(O.host){ if(O.g&&O.g.ph==="lobby") render(); return; }
+  setG(g);
+}
+function clientTick(){
+  if(S.screen!=="online"||O.screen!=="game") return;
+  if(O.deadline&&O.g){
+    const total=O.g.rem||1,left=Math.max(0,O.deadline-Date.now()),frac=left/total;
+    const fl=document.getElementById("tfill"),sc=document.getElementById("tsec");
+    if(fl){fl.style.width=(frac*100)+"%";fl.className="fill"+(frac<.25?" danger":frac<.5?" warn":"");}
+    if(sc) sc.textContent=Math.ceil(left/1000);
+  }
+  if(!O.g&&O.hostGoneAt&&Date.now()-O.hostGoneAt>6000&&!document.getElementById("hostgone")) render();
+}
+
+// ---------- منطق المضيف ----------
+function hostStep(){
+  if(!O.host||!O.R) return;
+  const H=HS,now=Date.now();
+  if(H.phase==="lobby"){
+    const me=myPeer(),seen=[];
+    O.peers.forEach(p=>{if(p.kind==="viewer"&&p.presence&&p.presence.n&&!seen.some(s=>s.p===p.peer)) seen.push({p:p.peer,n:String(p.presence.n).slice(0,16)});});
+    seen.sort((a,b)=>(b.p===me)-(a.p===me));
+    H.players=seen.slice(0,8);
+  }else if(H.phase==="choose"){
+    const ch=H.players[(H.round-1)%H.players.length],pr=pres(ch.p);
+    if(pr&&pr.c&&pr.c.r===H.round&&H.cats.includes(pr.c.k)&&remainingIn(H.used,pr.c.k)) hostSetQ(pr.c.k);
+  }else if(H.phase==="write"){
+    H.players.forEach((pl,i)=>{
+      const pr=pres(pl.p),f=pr&&pr.f;
+      if(f&&f.r===H.round&&typeof f.t==="string"&&f.a!==H.seenA[i]){
+        H.seenA[i]=f.a;const t=f.t.trim().slice(0,40);
+        if(t.length<2||sim(norm(t),norm(H.cur.a))){H.bad[i]=f.a;delete H.fakes[i];}
+        else{H.fakes[i]=t;delete H.bad[i];}
+      }
+    });
+    if(H.players.every((_,i)=>H.fakes[i]!=null)||(H.deadline&&now>H.deadline)) hostToPick();
+  }else if(H.phase==="pick"){
+    H.players.forEach((pl,i)=>{
+      const pr=pres(pl.p),k=pr&&pr.k;
+      if(k&&k.r===H.round&&Number.isInteger(k.i)&&k.i>=0&&k.i<H.opts.length&&!(Array.isArray(H.opts[k.i].o)&&H.opts[k.i].o.includes(i))) H.picks[i]=k.i;
+    });
+    if(H.players.every((_,i)=>H.picks[i]!=null)||(H.deadline&&now>H.deadline)) hostToReveal();
+  }
+  publish();
+}
+function hostDeadline(){HS.deadline=HS.timer?Date.now()+HS.timer*1000:0;}
+function hostNextRound(){
+  const H=HS;H.round++;H.phase="choose";H.deadline=0;H.cur=null;H.opts=[];H.fakes={};H.bad={};H.seenA={};H.picks={};H.gains={};
+}
+function hostSetQ(k){
+  const H=HS;
+  if(k==="random"){const av=H.cats.filter(c=>remainingIn(H.used,c));if(!av.length) return;k=av[Math.floor(Math.random()*av.length)];}
+  const idx=shuffle(BANK.map((q,i)=>i).filter(i=>BANK[i].c===k&&!H.used.includes(i)))[0];
+  if(idx==null) return;
+  H.used.push(idx);H.cur=BANK[idx];H.phase="write";hostDeadline();
+}
+function hostToPick(){
+  const H=HS,groups=[];
+  Object.entries(H.fakes).forEach(([p,t])=>{const k=norm(t),g=groups.find(g=>sim(g.k,k));if(g) g.o.push(+p);else groups.push({k,t,o:[+p]});});
+  const o=[{t:H.cur.a,o:"T"},...groups.map(g=>({t:g.t,o:g.o}))];
+  const free=shuffle(H.cur.d).filter(d=>!groups.some(g=>sim(g.k,norm(d))));
+  free.slice(0,Math.min(free.length,Math.max(1,4-o.length))).forEach(t=>o.push({t,o:"H"}));
+  H.opts=shuffle(o);H.phase="pick";H.picks={};hostDeadline();
+}
+function hostToReveal(){
+  const H=HS;
+  H.players.forEach((_,p)=>{
+    let g=0;const ch=H.opts[H.picks[p]];
+    if(ch&&ch.o==="T") g+=2;
+    g+=Object.entries(H.picks).filter(([q,v])=>+q!==p&&Array.isArray(H.opts[v].o)&&H.opts[v].o.includes(p)).length;
+    H.gains[p]=g;H.scores[p]=(H.scores[p]||0)+g;
+  });
+  H.phase="reveal";H.deadline=0;
+}
+function hostAction(a){
+  const H=HS;
+  if(a==="start"){if(!H.players.length) return;H.scores={};H.round=0;hostNextRound();}
+  else if(a==="random"&&H.phase==="choose") hostSetQ("random");
+  else if(a==="skip"){if(H.phase==="write") hostToPick();else if(H.phase==="pick") hostToReveal();}
+  else if(a==="next"&&H.phase==="reveal"){if(H.round>=H.rounds){H.phase="final";}else hostNextRound();}
+  else if(a==="again"&&H.phase==="final"){H.scores={};H.round=0;if(H.used.length+H.rounds>BANK.filter(q=>H.cats.includes(q.c)).length) H.used=[];hostNextRound();}
+  publish();
+}
+function buildG(){
+  const H=HS,n=H.players.length;
+  const g={ph:H.phase,r:H.round,rs:H.rounds,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>H.scores[i]||0)};
+  if(H.phase==="choose"&&n){g.ch=(H.round-1)%n;g.cats=H.cats.map(k=>[k,remainingIn(H.used,k)]);}
+  if(H.cur&&(H.phase==="write"||H.phase==="pick"||H.phase==="reveal")) g.q=[H.cur.c,H.cur.q];
+  if(H.phase==="write"){g.rem=H.timer*1000;g.dn=Object.keys(H.fakes).map(Number);g.bad=H.bad;}
+  if(H.phase==="pick"){g.rem=H.timer*1000;g.op=H.opts.map(o=>[o.t,Array.isArray(o.o)?o.o:[]]);g.dn=Object.keys(H.picks).map(Number);}
+  if(H.phase==="reveal"){
+    g.op=H.opts.map((o,j)=>[o.t,o.o,Object.entries(H.picks).filter(([,v])=>v===j).map(([p])=>+p)]);
+    g.gn=H.players.map((_,i)=>H.gains[i]||0);
+    g.nf=H.players.map((_,i)=>i).filter(i=>H.fakes[i]==null);
+    g.np=H.players.map((_,i)=>i).filter(i=>H.picks[i]==null);
+    g.last=H.round>=H.rounds?1:0;
+  }
+  return g;
+}
+function publish(){
+  if(!O.R) return;
+  const g=buildG(),s=JSON.stringify(g);
+  if(s===lastPub) return;
+  lastPub=s;
+  O.R.presence({g}).catch(()=>{});
+  setG(g);
+}
+function setG(g){
+  const gs=g?JSON.stringify(g):"";
+  if(gs===O.gs) return;
+  O.gs=gs; g=g?normG(JSON.parse(gs)):null;
+  O.g=g;
+  if(g){const k=g.r+":"+g.ph; if(k!==O.key){O.key=k;O.deadline=g.rem?Date.now()+g.rem:0;O.myA=O.sentA=0;O.err="";}}
+  render();
+}
+
+// ---------- أفعال اللاعب ----------
+function oSendFake(){
+  const el=document.getElementById("ofake"),v=((el&&el.value)||"").trim();
+  if(v.length<2){O.err="اكتب إجابة من حرفين على الأقل.";return render();}
+  O.err="";O.myA++;O.sentA=O.myA;
+  O.R.presence({f:{r:O.g.r,t:v.slice(0,40),a:O.myA}}).catch(()=>{});
+  render();
+}
+function oPick(i){O.R.presence({k:{r:O.g.r,i}}).catch(()=>{});O.sentA=-1;render();}
+function oChoose(k){
+  if(O.host&&k==="random"){hostAction("random");return;}
+  O.R.presence({c:{r:O.g.r,k}}).catch(()=>{});
+}
+
+// ---------- الواجهات ----------
+const settingsHTML=()=>{
+  const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
+  const rd=[3,5,8,10].map(n=>`<button class="chip" data-rounds="${n}" aria-pressed="${S.rounds===n}">${n} جولات</button>`).join("");
+  const tm=[[30,"30 ثانية"],[45,"45 ثانية"],[60,"دقيقة"],[0,"بدون وقت"]].map(([n,l])=>`<button class="chip" data-timer="${n}" aria-pressed="${S.timer===n}">${l}</button>`).join("");
+  return `<div class="eyebrow">الفئات المتاحة في اللعبة</div><div class="chips">${ch}</div>
+    <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
+    <div class="eyebrow">الوقت لكل لاعب</div><div class="chips">${tm}</div>`;
+};
+const timerHTML=()=>O.g&&O.g.rem?`<div class="timer"><div class="bar"><div class="fill" id="tfill"></div></div><span class="sec" id="tsec">${Math.round(O.g.rem/1000)}</span></div>`:"";
+const nameInput=()=>`<label for="oname">اسمك في اللعبة</label><input type="text" id="oname" data-keep maxlength="16" autocomplete="off" value="${esc(O.name)}" placeholder="مثلاً: محمد">`;
+const errHTML=()=>`<div class="err" role="alert">${esc(O.err)}</div>`;
+
+function onlineView(){
+  if(O.screen==="menu") return `<section class="card">
+      <h1>العب من جوالك</h1>
+      <div class="muted">المضيف ينشئ غرفة ويعطي الرمز للبقية. كل لاعب يفتح نفس الرابط من جواله ويدخل الرمز.</div>
+    </section>
+    <button class="btn" data-o="create">أنشئ غرفة</button>
+    <button class="btn pom" data-o="join">انضم برمز</button>
+    <button class="btn ghost" data-o="home">رجوع</button>`;
+  if(O.screen==="create") return `<section class="card">${nameInput()}</section>
+    <section class="card">${settingsHTML()}</section>${errHTML()}
+    <button class="btn" data-o="make" ${O.busy?"disabled":""}>${O.busy?"جارٍ إنشاء الغرفة…":"أنشئ الغرفة"}</button>
+    <button class="btn ghost" data-o="menu">رجوع</button>`;
+  if(O.screen==="join") return `<section class="card">${nameInput()}
+      <label for="ocode">رمز الغرفة</label>
+      <input type="text" id="ocode" data-keep maxlength="5" autocomplete="off" autocapitalize="characters" dir="ltr" value="${esc(O.codeIn)}" placeholder="ABCDE" style="text-align:center;letter-spacing:.3em;font-size:1.4rem">
+    </section>${errHTML()}
+    <button class="btn" data-o="enter" ${O.busy?"disabled":""}>${O.busy?"جارٍ الدخول…":"ادخل الغرفة"}</button>
+    <button class="btn ghost" data-o="menu">رجوع</button>`;
+  return gameView();
+}
+function codeBox(){return `<div class="code-box" dir="ltr">${esc(O.code.toUpperCase())}</div>`;}
+function scoreListO(withGain){
+  const g=O.g,me=myIdx();
+  const r=g.pl.map((n,i)=>({n,i,s:g.sc[i]||0,gn:g.gn?g.gn[i]:0})).sort((a,b)=>b.s-a.s);
+  return `<section class="card"><div class="eyebrow">الترتيب</div><div class="score-list">${
+    r.map((p,k)=>`<div class="sc ${k===0&&p.s>0?"lead":""}"><span class="rank">${k+1}</span><span class="nm">${esc(p.n)}${p.i===me?' <span class="you">أنت</span>':""}</span>${withGain&&p.gn?`<span class="gain">+${p.gn}</span>`:""}<span class="pts">${p.s}</span></div>`).join("")}</div></section>`;
+}
+function waitCard(t){return `<section class="card handoff">${mascot}<div class="muted">${t}</div></section>`;}
+function gameView(){
+  const g=O.g,me=myIdx(),leave=`<button class="btn ghost" data-o="leave">اخرج من الغرفة</button>`;
+  if(!g){
+    const gone=O.hostGoneAt&&Date.now()-O.hostGoneAt>6000;
+    return `<section class="card" ${gone?'id="hostgone"':""}><div class="eyebrow">رمز الغرفة</div>${codeBox()}
+      <div class="muted">${gone?"لا يوجد مضيف في هذه الغرفة. تأكد من الرمز، أو أن المضيف ما زال فاتحاً الصفحة.":"جارٍ الاتصال بالمضيف…"}</div></section>${errHTML()}${leave}`;
+  }
+  const viewer=me<0&&g.ph!=="lobby";
+  const qBlock=g.q?`<span class="cat-chip">${CATS[g.q[0]]||""}</span><div class="q">${esc(g.q[1])}</div>`:"";
+  const prog=(dn)=>`<div class="muted">${dn.length} من ${g.pl.length} أنهوا</div>`;
+  const skip=O.host?`<button class="btn ghost" data-o="skip">تخطَّ من لم يُنهِ</button>`:"";
+  if(g.ph==="lobby"){
+    const list=g.pl.map((n,i)=>`<div class="sc"><span class="rank">${i+1}</span><span class="nm">${esc(n)}${i===0?' <span class="you">المضيف</span>':""}</span></div>`).join("");
+    return `<section class="card"><div class="eyebrow">رمز الغرفة</div>${codeBox()}
+        <div class="muted">على كل لاعب أن يفتح هذا الرابط نفسه من جواله، يضغط «العب من جوالك» ثم «انضم برمز» ويكتب الرمز.</div></section>
+      <section class="card"><div class="eyebrow">اللاعبون (${g.pl.length} من 8)</div><div class="score-list">${list||'<div class="muted">بانتظار اللاعبين…</div>'}</div></section>
+      ${O.host?`<button class="btn" data-o="start" ${g.pl.length<2?"disabled":""}>${g.pl.length<2?"بانتظار لاعب واحد على الأقل":"ابدأ اللعب"}</button>`:waitCard("بانتظار المضيف ليبدأ اللعبة")}${leave}`;
+  }
+  if(g.ph==="choose"){
+    const who=g.pl[g.ch];
+    if(me===g.ch){
+      const tiles=g.cats.map(([k,left])=>`<button class="cat-tile" data-ochoose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"انتهت أسئلتها"}</small></button>`).join("");
+      return `<section class="card"><div class="eyebrow">اختيار الفئة</div><h2>دورك تختار فئة هذه الجولة</h2><div class="cat-grid">${tiles}</div></section>
+        <button class="btn ghost" data-o="${O.host?"random":"crandom"}">اختيار عشوائي</button>`;
+    }
+    return `${waitCard(`${esc(who)} يختار فئة الجولة…`)}${O.host?`<button class="btn ghost" data-o="random">اختر فئة عشوائية بدلاً منه</button>`:""}`;
+  }
+  if(g.ph==="write"){
+    if(viewer) return `<section class="card">${qBlock}<div class="muted">أنت تشاهد هذه اللعبة فقط لأنك دخلت بعد بدايتها.</div></section>${leave}`;
+    const done=g.dn.includes(me),rejected=g.bad&&g.bad[me]===O.myA&&O.myA>0;
+    let body;
+    if(done) body=`<div class="muted">أرسلت كذبتك ✓ بانتظار الآخرين</div>${prog(g.dn)}`;
+    else if(O.sentA&&O.sentA===O.myA&&!rejected) body=`<div class="muted">جارٍ إرسال كذبتك…</div>`;
+    else body=`<label for="ofake">اكتب إجابة مزيفة تخدع بها الآخرين</label>
+      <input type="text" id="ofake" data-keep maxlength="40" autocomplete="off" placeholder="كذبة مقنعة…">
+      <div class="err" role="alert">${rejected?"هذه قريبة جداً من الإجابة الصحيحة! اكتب كذبة مختلفة.":esc(O.err)}</div>
+      <button class="btn" data-o="send">أرسل إجابتي</button>`;
+    return `<section class="card">${timerHTML()}${qBlock}${body}</section>${done?skip:""}`;
+  }
+  if(g.ph==="pick"){
+    if(viewer) return `<section class="card">${qBlock}<div class="muted">اللاعبون يختارون الآن…</div></section>${leave}`;
+    const done=g.dn.includes(me)||O.sentA===-1;
+    const opts=g.op.map(([t,o],i)=>o.includes(me)?"":`<button class="opt" data-opick="${i}"><span class="letter">${LET[i]||i+1}</span><span>${esc(t)}</span></button>`).join("");
+    return `<section class="card">${timerHTML()}${qBlock}${done?`<div class="muted">تم اختيارك ✓ بانتظار الآخرين</div>${prog(g.dn)}`:`<div class="muted">أين الحقيقة؟ (إجابتك مخفية عنك)</div><div class="opts">${opts}</div>`}</section>${done?skip:""}`;
+  }
+  if(g.ph==="reveal"){
+    const items=g.op.map(([t,o,by])=>({t,o,by})).sort((a,b)=>(b.o==="T")-(a.o==="T")||b.by.length-a.by.length);
+    const list=items.map(({t,o,by})=>{const T=o==="T";const lab=T?"الحقيقة":o==="H"?"فخ اللعبة":"كذبة "+o.map(i=>esc(g.pl[i])).join(" و ");
+      return `<div class="rv ${T?"true":""}"><span class="badge ${T?"t":"f"}">${lab}</span><div class="ans">${esc(t)}</div>
+        <div class="who">${by.length?`اختارها: <b>${by.map(i=>esc(g.pl[i])).join("، ")}</b>`:"لم يخترها أحد"}</div></div>`;}).join("");
+    const late=[g.nf.length&&g.pl.length>1?`لم يكتب كذبة في الوقت: ${g.nf.map(i=>esc(g.pl[i])).join("، ")}`:"",g.np.length?`لم يختر في الوقت: ${g.np.map(i=>esc(g.pl[i])).join("، ")}`:""].filter(Boolean).map(t=>`<div class="muted">${t}</div>`).join("");
+    return `<section class="card">${qBlock}<div class="reveal-list">${list}</div>${late}</section>${scoreListO(true)}
+      ${O.host?`<button class="btn" data-o="next">${g.last?"النتيجة النهائية":"الجولة التالية"}</button>`:waitCard("بانتظار المضيف للجولة التالية")}`;
+  }
+  if(g.ph==="final"){
+    const r=g.pl.map((n,i)=>({n,s:g.sc[i]||0})).sort((a,b)=>b.s-a.s),top=r[0],tops=r.filter(p=>p.s===top.s);
+    return `<section class="card handoff">${mascot}<div class="muted">${tops.length>1?"تعادل في القمة!":"الفائز"}</div>
+      <div class="big-name">${tops.map(p=>esc(p.n)).join(" و ")}</div><div class="muted">${top.s} نقطة</div></section>
+      ${scoreListO(false)}${O.host?`<button class="btn" data-o="again">لعبة جديدة بنفس اللاعبين</button>`:""}${leave}`;
+  }
+  return waitCard("…");
+}
+function onlineClick(t){
+  const a=t.dataset.o;
+  if(t.dataset.ochoose){oChoose(t.dataset.ochoose);return true;}
+  if(t.dataset.opick!=null){oPick(+t.dataset.opick);return true;}
+  if(!a) return false;
+  if(a==="home"){S.screen="home";render();}
+  else if(a==="menu"){O.screen="menu";O.err="";render();}
+  else if(a==="create"||a==="join"){O.screen=a;O.err="";render();}
+  else if(a==="make") enterRoom(newCode(),true);
+  else if(a==="enter") enterRoom(O.codeIn.trim().toLowerCase(),false);
+  else if(a==="send") oSendFake();
+  else if(a==="crandom"){const av=O.g.cats.filter(([,l])=>l).map(([k])=>k);if(av.length) oChoose(av[Math.floor(Math.random()*av.length)]);}
+  else if(a==="leave") leaveRoom();
+  else if(O.host&&["start","random","skip","next","again"].includes(a)) hostAction(a);
+  return true;
+}
+
+render();
+</script>
+</body>
+</html>
