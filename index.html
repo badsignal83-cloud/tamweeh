@@ -123,6 +123,9 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .st.warn{background:var(--pom);color:#fff}.st.off{background:var(--ink-3);color:var(--pom)}
 .left{color:var(--pom);font-size:.75rem}
 .notice.alert{border-color:var(--pom);background:rgba(224,69,94,.15)}
+.btn.exit{opacity:.85;margin-top:4px}
+.btn.wa{background:#25d366;color:#05301a;box-shadow:0 5px 0 #128c4a;text-decoration:none;text-align:center}
+.invite-link{font-size:.8rem;color:var(--muted);text-align:center;user-select:all;overflow-wrap:anywhere}
 .foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
 @keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
 .card{animation:pop .22s ease-out}
@@ -136,7 +139,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 11;
+const APP_VERSION = 13;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -897,7 +900,9 @@ function render(){
   const ae=document.activeElement,fid=ae&&app.contains(ae)&&ae.id?ae.id:null,keep={};
   let ss=null,se=null;try{if(fid){ss=ae.selectionStart;se=ae.selectionEnd;}}catch(e){}
   app.querySelectorAll("input[data-keep]").forEach(i=>keep[i.id]=i.value);
-  const v = VIEWS[S.screen]();
+  let v = VIEWS[S.screen]();
+  if(["choose","handoff","write","pick","reveal"].includes(S.screen))
+    v+=`<button class="btn ghost small exit" data-endlocal>${S.endArm?"متأكد؟ اضغط مرة ثانية لإنهاء اللعبة":"إنهاء اللعبة"}</button>`;
   const foot = S.screen==="online"?"نموذج أولي · كل لاعب من جواله":S.screen==="home"?"نموذج أولي":"نموذج أولي · جهاز واحد يتنقل بين اللاعبين";
   app.innerHTML = header()+v+`<div class="foot">${foot} · الإصدار ${APP_VERSION}</div>`;
   Object.entries(keep).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&!el.value&&val) el.value=val;});
@@ -1168,6 +1173,10 @@ app.addEventListener("click",e=>{
   const t=e.target.closest("button"); if(!t) return;
   if(t.dataset.go){stopTimer();S.screen=t.dataset.go;if(t.dataset.go==="online"&&!O.R){O.screen="menu";O.err="";}render();return;}
   if(S.screen==="online"&&onlineClick(t)) return;
+  if(t.dataset.endlocal!=null){
+    if(!S.endArm){S.endArm=true;render();setTimeout(()=>{if(S.endArm){S.endArm=false;render();}},5000);return;}
+    S.endArm=false;stopTimer();S.screen="setup";render();return;
+  }
   if(t.id==="add"){S.players.push("");render();app.querySelector(`#p${S.players.length-1}`)?.focus();}
   else if(t.dataset.del!=null){S.players.splice(+t.dataset.del,1);render();}
   else if(t.dataset.cat){const k=t.dataset.cat;S.cats=S.cats.includes(k)?S.cats.filter(c=>c!==k):[...S.cats,k];render();}
@@ -1569,7 +1578,12 @@ function scoreListO(withGain){
 }
 function waitCard(t){return `<section class="card handoff">${mascot}<div class="muted">${t}</div></section>`;}
 function gameView(){
-  const v=gameViewInner();
+  let v=gameViewInner();
+  if(!v.includes('data-o="leave"')){
+    const mid=O.g&&["choose","write","pick","reveal"].includes(O.g.ph);
+    const msg=O.leaveArm?(O.host?"متأكد؟ ستنتهي اللعبة عند الجميع. اضغط مرة ثانية":"متأكد؟ اضغط مرة ثانية للخروج"):(mid?"اخرج من اللعبة":"اخرج من الغرفة");
+    v+=`<button class="btn ghost small exit" data-o="leave">${msg}</button>`;
+  }
   return O.hostOff&&O.g?`<div class="notice" role="status">انقطع اتصال المضيف مؤقتاً، اللعبة متوقفة حتى يعود.</div>`+v:v;
 }
 function gameViewInner(){
@@ -1586,7 +1600,12 @@ function gameViewInner(){
   if(g.ph==="lobby"){
     const list=g.pl.map((n,i)=>`<div class="sc"><span class="rank">${i+1}</span><span class="nm">${esc(n)}${i===0?' <span class="you">المضيف</span>':""}</span></div>`).join("");
     return `<section class="card"><div class="eyebrow">رمز الغرفة</div>${codeBox()}
-        <div class="muted">على كل لاعب أن يفتح هذا الرابط نفسه من جواله، يضغط «العب من جوالك» ثم «انضم برمز» ويكتب الرمز.</div></section>
+        <div class="muted">أرسل رابط الدعوة، فيفتح عند صديقك على هذه الغرفة مباشرة، أو أعطه الرمز.</div>
+        <div class="row">
+          <button class="btn" data-o="invite">${O.inviteMsg||"أرسل دعوة للغرفة"}</button>
+          <a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(inviteText())}" target="_blank" rel="noopener">واتساب</a>
+        </div>
+        <div class="invite-link" dir="ltr">${esc(inviteURL())}</div></section>
       <section class="card"><div class="eyebrow">اللاعبون (${g.pl.length} من 8)</div><div class="score-list">${list||'<div class="muted">بانتظار اللاعبين…</div>'}</div></section>
       ${O.host?(()=>{const ready=HS.players&&HS.players.every(p=>SEEN[p.p]);const dis=g.pl.length<2||!ready;
         return `<button class="btn" data-o="start" ${dis?"disabled":""}>${g.pl.length<2?"بانتظار لاعب واحد على الأقل":!ready?"جارٍ تحميل سجل اللاعبين…":"ابدأ اللعب"}</button>`;})():waitCard("بانتظار المضيف ليبدأ اللعبة")}${leave}`;
@@ -1636,6 +1655,16 @@ function gameViewInner(){
   }
   return waitCard("…");
 }
+// رابط دعوة يفتح الغرفة نفسها مباشرة
+function inviteURL(){return location.origin+location.pathname+"?room="+O.code.toUpperCase();}
+function inviteText(){return `تعال العب معي «تمويه» 🎭 اضغط الرابط وادخل الغرفة ${O.code.toUpperCase()}:\n${inviteURL()}`;}
+async function shareInvite(){
+  const text=inviteText(), url=inviteURL();
+  try{ if(navigator.share){ await navigator.share({title:"تمويه",text:`تعال العب معي «تمويه» 🎭 الغرفة ${O.code.toUpperCase()}`,url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(text); O.inviteMsg="نُسخ الرابط ✓ الصقه لأصحابك"; }
+  catch(e){ O.inviteMsg="انسخ الرابط الظاهر تحت الزر"; }
+  render(); setTimeout(()=>{O.inviteMsg="";render();},3000);
+}
 function onlineClick(t){
   const a=t.dataset.o;
   if(t.dataset.ochoose){oChoose(t.dataset.ochoose);return true;}
@@ -1647,8 +1676,13 @@ function onlineClick(t){
   else if(a==="make") enterRoom(newCode(),true);
   else if(a==="enter") enterRoom(O.codeIn.trim().toLowerCase(),false);
   else if(a==="send") oSendFake();
+  else if(a==="invite") shareInvite();
   else if(a==="crandom"){const av=O.g.cats.filter(([,l])=>l).map(([k])=>k);if(av.length) oChoose(av[Math.floor(Math.random()*av.length)]);}
-  else if(a==="leave") leaveRoom();
+  else if(a==="leave"){
+    const mid=O.g&&["choose","write","pick","reveal"].includes(O.g.ph);
+    if(mid&&!O.leaveArm){O.leaveArm=true;render();setTimeout(()=>{if(O.leaveArm){O.leaveArm=false;render();}},5000);}
+    else{O.leaveArm=false;leaveRoom();}
+  }
   else if(O.host&&["start","random","skip","next","again"].includes(a)) hostAction(a);
   return true;
 }
@@ -1656,6 +1690,13 @@ function onlineClick(t){
 loadStats();
 (function resumeIfNeeded(){
   const ss=readSession();
+  // فتح رابط دعوة: يذهب مباشرة إلى شاشة الانضمام مع الرمز
+  let inv=null; try{ inv=(new URLSearchParams(location.search).get("room")||"").trim().toLowerCase(); history.replaceState(null,"",location.pathname); }catch(e){}
+  if(inv&&/^[a-z0-9]{5}$/.test(inv)&&!(ss&&ss.code===inv)){
+    if(ss) clearSession();
+    S.screen="online"; O.screen="join"; O.codeIn=inv.toUpperCase(); O.err="";
+    return render();
+  }
   if(!ss) return render();
   O.name=ss.name||O.name; S.screen="online"; O.screen="game"; O.code=ss.code;
   render();
