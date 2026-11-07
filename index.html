@@ -139,7 +139,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -1297,7 +1297,11 @@ const seenLoading=new Set();
 function loadSeenFor(pid){
   if(SEEN[pid]||seenLoading.has(pid)||!O.R||!O.R.loadSeen) return;
   seenLoading.add(pid);
-  O.R.loadSeen(pid).then(ids=>{SEEN[pid]=new Set(ids);}).catch(()=>{SEEN[pid]=new Set();}).finally(()=>{seenLoading.delete(pid);if(O.host) publish();});
+  let done=false;
+  const finish=ids=>{ if(done) return; done=true; SEEN[pid]=SEEN[pid]||new Set(ids||[]); seenLoading.delete(pid); if(O.host){publish();render();} };
+  // لا ننتظر أكثر من 3 ثوانٍ: إن تأخر الخادم نبدأ بدون سجل هذا اللاعب
+  setTimeout(()=>finish([]),3000);
+  O.R.loadSeen(pid).then(ids=>{ if(done&&SEEN[pid]) ids.forEach(i=>SEEN[pid].add(i)); else finish(ids); }).catch(()=>finish([]));
 }
 const seenByRoom=id=>HS.players&&HS.players.some(p=>SEEN[p.p]&&SEEN[p.p].has(id));
 const freshInRoom=q=>{const id=qid(q);return !USED.has(id)&&!seenByRoom(id)&&levelOK(q,HS.level);};
