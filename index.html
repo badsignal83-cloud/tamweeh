@@ -126,6 +126,8 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .btn.exit{opacity:.85;margin-top:4px}
 .btn.wa{background:#25d366;color:#05301a;box-shadow:0 5px 0 #128c4a;text-decoration:none;text-align:center}
 .invite-link{font-size:.8rem;color:var(--muted);text-align:center;user-select:all;overflow-wrap:anywhere}
+.round-pill.tb{background:var(--pom);border-color:var(--pom);color:#fff}
+.notice.tbn{border-color:var(--saffron);text-align:center;font-weight:500}
 .foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
 @keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
 .card{animation:pop .22s ease-out}
@@ -139,7 +141,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 15;
+const APP_VERSION = 16;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -889,10 +891,13 @@ const mascot=`<svg class="mascot" viewBox="0 0 96 96" aria-hidden="true">
   <circle cx="62" cy="68" r="5" fill="var(--sky)"/><circle cx="72" cy="74" r="5" fill="var(--mint)"/>
 </svg>`;
 
+// كسر التعادل: إذا انتهت الجولات والصدارة متعادلة نلعب جولة إضافية حتى يتميز فائز
+function topTie(scores,n){const arr=Array.from({length:n},(_,i)=>scores[i]||0);const mx=Math.max(...arr);const idx=arr.map((v,i)=>v===mx?i:-1).filter(i=>i>=0);return idx.length>1?idx:null;}
+function roundLabel(r,rs){return r>rs?`جولة كسر التعادل${r-rs>1?" "+(r-rs):""}`:`الجولة ${r} من ${rs}`;}
 function header(){
   let r="";
-  if(["choose","handoff","write","pick","reveal"].includes(S.screen)) r=`<span class="round-pill">الجولة ${S.round} من ${S.rounds}</span>`;
-  else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.r>0&&O.g.ph!=="final") r=`<span class="round-pill">الجولة ${O.g.r} من ${O.g.rs}</span>`;
+  if(["choose","handoff","write","pick","reveal"].includes(S.screen)) r=`<span class="round-pill ${S.round>S.rounds?"tb":""}">${roundLabel(S.round,S.rounds)}</span>`;
+  else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.r>0&&O.g.ph!=="final") r=`<span class="round-pill ${O.g.r>O.g.rs?"tb":""}">${roundLabel(O.g.r,O.g.rs)}</span>`;
   return `<div class="brand"><div><div class="logo">تمويه</div><div class="tag">اكتب كذبة مقنعة، واكشف الحقيقة</div></div>${r}</div>`;
 }
 
@@ -969,7 +974,8 @@ const VIEWS={
     const who=S.players[(S.round-1)%S.players.length];
     const tiles=S.cats.map(k=>{const left=remaining(k);
       return `<button class="cat-tile" data-choose="${k}" ${left?"":"disabled"}><b>${CATS[k]}</b><small>${left?`${left} أسئلة متبقية`:"مغلقة · انتهت أسئلتها"}</small></button>`;}).join("");
-    return `<section class="card">
+    const tie=S.round>S.rounds?topTie(S.scores,S.players.length):null;
+    return `${tie?`<div class="notice tbn">⚔️ جولة كسر التعادل بين: ${tie.map(i=>esc(S.players[i])).join(" و ")}</div>`:""}<section class="card">
       <div class="eyebrow">اختيار الفئة</div>
       <h2>دور ${esc(who)} يختار فئة هذه الجولة</h2>
       <div class="cat-grid">${tiles}</div>
@@ -1016,7 +1022,7 @@ const VIEWS={
   reveal(){
     const items=S.options.map((o,i)=>{
       const pickers=Object.entries(S.picks).filter(([,v])=>v===i).map(([p])=>S.players[p]);
-      const owner=o.owner==null?"":o.owner==="house"?"فخ اللعبة":`كذبة ${o.owner.map(q=>esc(S.players[q])).join(" و ")}`;
+      const owner=Array.isArray(o.owner)?`كذبة ${o.owner.map(q=>esc(S.players[q])).join(" و ")}`:o.owner==="house"?"فخ اللعبة":"";
       return {o,pickers,owner,i};
     }).sort((a,b)=>(b.o.owner==="true")-(a.o.owner==="true")||b.pickers.length-a.pickers.length);
     const list=items.map(({o,pickers,owner})=>{
@@ -1033,7 +1039,7 @@ const VIEWS={
       ${late()}
     </section>
     ${scoreCard(true)}
-    <button class="btn" id="next" autofocus>${S.round>=S.rounds?"النتيجة النهائية":"الجولة التالية"}</button>`;
+    <button class="btn" id="next" autofocus>${S.round>=S.rounds?(topTie(S.scores,S.players.length)&&S.cats.some(k=>leftIn(k))?"⚔️ جولة كسر التعادل":"النتيجة النهائية"):"الجولة التالية"}</button>`;
   },
   final(){
     const ranked=rank();
@@ -1196,7 +1202,7 @@ app.addEventListener("click",e=>{
   else if(t.id==="ready"){S.screen=S.phase;startTimer();render();}
   else if(t.id==="submitFake") submitFake(false);
   else if(t.dataset.pick!=null) pick(+t.dataset.pick);
-  else if(t.id==="next"){ if(S.round>=S.rounds){S.screen="final";render();} else nextRound(); }
+  else if(t.id==="next"){ if(S.round>=S.rounds&&!(topTie(S.scores,S.players.length)&&S.cats.some(k=>leftIn(k)))){S.screen="final";render();} else nextRound(); }
   else if(t.id==="again") startGame();
   else if(t.id==="home"){stopTimer();S.screen="setup";render();}
 });
@@ -1494,13 +1500,16 @@ function hostAction(a){
   if(a==="start"){if(!H.players.length) return; if(H.players.some(p=>!SEEN[p.p])){H.players.forEach(p=>loadSeenFor(p.p));return;}H.scores={};H.round=0;hostNextRound();}
   else if(a==="random"&&H.phase==="choose") hostSetQ("random");
   else if(a==="skip"){if(H.phase==="write") hostToPick();else if(H.phase==="pick") hostToReveal();}
-  else if(a==="next"&&H.phase==="reveal"){if(H.round>=H.rounds){H.phase="final";}else hostNextRound();}
+  else if(a==="next"&&H.phase==="reveal"){
+    const tie=topTie(H.scores,H.players.length);
+    if(H.round>=H.rounds&&!(tie&&H.cats.some(k=>remainingIn(0,k)))){H.phase="final";}else hostNextRound();
+  }
   else if(a==="again"&&H.phase==="final"){H.scores={};H.round=0;hostNextRound();}
   publish();
 }
 function buildG(){
   const H=HS,n=H.players.length;
-  const g={out:H.out?1:0,ph:H.phase,r:H.round,rs:H.rounds,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>H.scores[i]||0)};
+  const g={out:H.out?1:0,tb:H.round>H.rounds?(topTie(H.scores,H.players.length)||[]):0,ph:H.phase,r:H.round,rs:H.rounds,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>H.scores[i]||0)};
   if(H.phase==="choose"&&n){g.ch=(H.round-1)%n;g.cats=H.cats.map(k=>[k,remainingIn(H.used,k)]);}
   if(H.cur&&(H.phase==="write"||H.phase==="pick"||H.phase==="reveal")) g.q=[H.cur.c,H.cur.q];
   if(H.phase==="write"){g.rem=H.timer*1000;g.dn=Object.keys(H.fakes).map(Number);g.bad=H.bad;}
@@ -1510,7 +1519,8 @@ function buildG(){
     g.gn=H.players.map((_,i)=>H.gains[i]||0);
     g.nf=H.players.map((_,i)=>i).filter(i=>H.fakes[i]==null);
     g.np=H.players.map((_,i)=>i).filter(i=>H.picks[i]==null);
-    g.last=H.round>=H.rounds?1:0;
+    const tie=topTie(H.scores,H.players.length);
+    g.last=H.round>=H.rounds?(tie&&H.cats.some(k=>remainingIn(0,k))?2:1):0;
   }
   return g;
 }
@@ -1589,6 +1599,8 @@ function scoreListO(withGain){
 function waitCard(t){return `<section class="card handoff">${mascot}<div class="muted">${t}</div></section>`;}
 function gameView(){
   let v=gameViewInner();
+  if(O.g&&O.g.r>O.g.rs&&["choose","write","pick"].includes(O.g.ph)){const tb=Array.isArray(O.g.tb)?O.g.tb:(O.g.tb&&typeof O.g.tb==="object"?Object.values(O.g.tb):[]);
+    if(tb.length) v=`<div class="notice tbn">⚔️ جولة كسر التعادل بين: ${tb.map(i=>esc(O.g.pl[i])).join(" و ")}</div>`+v;}
   if(!v.includes('data-o="leave"')){
     const mid=O.g&&["choose","write","pick","reveal"].includes(O.g.ph);
     const msg=O.leaveArm?(O.host?"متأكد؟ ستنتهي اللعبة عند الجميع. اضغط مرة ثانية":"متأكد؟ اضغط مرة ثانية للخروج"):(mid?"اخرج من اللعبة":"اخرج من الغرفة");
@@ -1655,7 +1667,7 @@ function gameViewInner(){
     const leftNames=g.pl.map((n,i)=>({n,k:playerState(g,i).left})).filter(x=>x.k);
     const late=[leftNames.length?`⚠️ خرج من التطبيق أثناء الجولة: ${leftNames.map(x=>esc(x.n)+(x.k>1?` (${x.k} مرات)`:"")).join("، ")}`:"",g.nf.length&&g.pl.length>1?`لم يكتب كذبة في الوقت: ${g.nf.map(i=>esc(g.pl[i])).join("، ")}`:"",g.np.length?`لم يختر في الوقت: ${g.np.map(i=>esc(g.pl[i])).join("، ")}`:""].filter(Boolean).map(t=>`<div class="muted">${t}</div>`).join("");
     return `<section class="card">${qBlock}<div class="reveal-list">${list}</div>${late}</section>${scoreListO(true)}
-      ${O.host?`<button class="btn" data-o="next">${g.last?"النتيجة النهائية":"الجولة التالية"}</button>`:waitCard("بانتظار المضيف للجولة التالية")}`;
+      ${O.host?`<button class="btn" data-o="next">${g.last===2?"⚔️ جولة كسر التعادل":g.last?"النتيجة النهائية":"الجولة التالية"}</button>`:waitCard("بانتظار المضيف للجولة التالية")}`;
   }
   if(g.ph==="final"){
     const r=g.pl.map((n,i)=>({n,s:g.sc[i]||0})).sort((a,b)=>b.s-a.s),top=r[0],tops=r.filter(p=>p.s===top.s);
