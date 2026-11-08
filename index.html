@@ -128,6 +128,23 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .invite-link{font-size:.8rem;color:var(--muted);text-align:center;user-select:all;overflow-wrap:anywhere}
 .round-pill.tb{background:var(--pom);border-color:var(--pom);color:#fff}
 .notice.tbn{border-color:var(--saffron);text-align:center;font-weight:500}
+.uid-box{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0}.uid-box code{direction:ltr;font-size:.8rem;background:rgba(0,0,0,.06);padding:4px 6px;border-radius:6px;word-break:break-all}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:420px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--ink);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile b{font-family:var(--display);font-weight:400;font-size:1.6rem;color:var(--saffron);font-variant-numeric:tabular-nums}
+.tile span{font-size:.78rem;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+.stbl{border-collapse:collapse;width:100%;font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stbl th{color:var(--muted);font-weight:500;text-align:start;padding:6px 8px;border-bottom:1px solid var(--line)}
+.stbl td{padding:8px;border-bottom:1px solid var(--line)}
+.stbl td.rk{color:var(--muted)}.stbl td.nm{font-weight:700}
+.game-row{background:var(--ink);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.gr-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.85rem}
+.gr-pl{display:flex;flex-wrap:wrap;gap:6px}.gr-pl span{background:var(--ink-3);border-radius:999px;padding:2px 10px;font-size:.85rem}
+.gr-pl span.win{background:rgba(242,182,50,.2);outline:1px solid var(--saffron)}.gr-win{font-size:.85rem;color:var(--saffron)}
+.q-row{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--ink);border-radius:12px;padding:8px 12px}
+.q-t{font-size:.9rem;min-width:0}.q-p{font-family:var(--display);color:var(--saffron);white-space:nowrap}
 .foot{text-align:center;font-size:.75rem;color:var(--muted);margin-top:auto}
 @keyframes pop{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}
 .card{animation:pop .22s ease-out}
@@ -135,13 +152,14 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 <body>
 
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 16;
+const APP_VERSION = 18;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -810,11 +828,11 @@ function recordStats(q,n,c){
   if(!q||!n) return;
   const id=qid(q);
   const cur=STATS[id]||{n:0,c:0}; STATS[id]={n:cur.n+n,c:cur.c+c};
-  try{const db=fbInit(); if(db) db.ref("stats/"+id).transaction(v=>({n:((v&&v.n)||0)+n,c:((v&&v.c)||0)+c})).catch(()=>{});}catch(e){}
+  try{const db=fbInit(); if(db) whenAuth().then(()=>db.ref("stats/"+id).transaction(v=>({n:((v&&v.n)||0)+n,c:((v&&v.c)||0)+c}))).catch(()=>{});}catch(e){}
 }
 function loadStats(){
   try{const db=fbInit(); if(!db) return;
-    db.ref("stats").once("value").then(sn=>{const v=sn.val()||{};for(const k in v){if(v[k]&&typeof v[k].n==="number") STATS[k]={n:v[k].n,c:v[k].c||0};}render();}).catch(()=>{});
+    whenAuth().then(()=>db.ref("stats").once("value")).then(sn=>{const v=sn.val()||{};for(const k in v){if(v[k]&&typeof v[k].n==="number") STATS[k]={n:v[k].n,c:v[k].c||0};}render();}).catch(()=>{});
   }catch(e){}
 }
 const leftTotal=cats=>cats.reduce((n,k)=>n+leftIn(k),0);
@@ -894,6 +912,97 @@ const mascot=`<svg class="mascot" viewBox="0 0 96 96" aria-hidden="true">
 // كسر التعادل: إذا انتهت الجولات والصدارة متعادلة نلعب جولة إضافية حتى يتميز فائز
 function topTie(scores,n){const arr=Array.from({length:n},(_,i)=>scores[i]||0);const mx=Math.max(...arr);const idx=arr.map((v,i)=>v===mx?i:-1).filter(i=>i>=0);return idx.length>1?idx:null;}
 function roundLabel(r,rs){return r>rs?`جولة كسر التعادل${r-rs>1?" "+(r-rs):""}`:`الجولة ${r} من ${rs}`;}
+// ================= إحصائيات اللعب =================
+function saveGame(rec){
+  try{
+    const mx=Math.max(...rec.p.map(x=>x.s));
+    rec.p.forEach(x=>{x.w=x.s===mx?1:0;});
+    rec.t=Date.now(); rec.tb=Math.max(0,rec.r-rec.rs);
+    const db=fbInit(); if(db) whenAuth().then(()=>db.ref("games").push(rec)).catch(()=>{});
+  }catch(e){}
+}
+const GS={state:"idle",data:null,err:""};
+const nameKey=n=>String(n||"").trim().toLowerCase().replace(/\s+/g," ");
+async function loadGameStats(){
+  GS.state="loading";GS.err="";render();
+  const db=fbInit();
+  if(!db){GS.state="error";GS.err="الخادم غير متاح.";return render();}
+  await whenAuth();
+  if(AUTH_USER&&!isAdminUser()){GS.state="gate";return render();}
+  const get=path=>withTimeout(db.ref(path).once("value"),12000).then(sn=>({ok:true,v:sn.val()||{}})).catch(e=>({ok:false,e}));
+  const [g,r,st]=await Promise.all([get("games"),get("rooms"),get("stats")]);
+  if(!g.ok&&!r.ok){GS.state="error";GS.err=AUTH_USER?"هذا الحساب ليس حساب المدير، أو لم تُضف معرّفه في قواعد Firebase بعد.":"لا تسمح قواعد Firebase بقراءة الإحصائيات بعد. حدّث القواعد كما في التعليمات.";return render();}
+  GS.data={games:g.ok?g.v:{},rooms:r.ok?r.v:{},stats:st.ok?st.v:{},partial:!g.ok||!r.ok};
+  GS.state="ready";render();
+}
+function buildGameStats(){
+  const D=GS.data, games=[], seenRooms=new Set();
+  Object.values(D.games).forEach(x=>{ if(!x||!x.p) return; const p=Array.isArray(x.p)?x.p:Object.values(x.p); if(x.rc) seenRooms.add(x.rc); games.push({...x,p,detail:true}); });
+  // ألعاب قديمة قبل تفعيل السجل: نستخرجها من حالة الغرف المحفوظة
+  let roomsMade=0;
+  Object.entries(D.rooms).forEach(([code,rm])=>{
+    roomsMade++;
+    if(seenRooms.has(code)||!rm||!rm.hs) return;
+    let hs; try{hs=JSON.parse(rm.hs);}catch(e){return;}
+    if(!hs||!hs.round||!hs.players||!hs.players.length) return;
+    const joined=Object.values(rm.peers||{}).map(x=>x&&x.joined).filter(Boolean);
+    const p=hs.players.map((pl,i)=>({n:pl.n,s:(hs.scores&&hs.scores[i])||0}));
+    const mx=Math.max(...p.map(x=>x.s)); p.forEach(x=>x.w=hs.phase==="final"&&x.s===mx?1:0);
+    games.push({t:joined.length?Math.min(...joined):0,m:"o",r:hs.round,rs:hs.rounds,p,done:hs.phase==="final",old:true});
+  });
+  games.forEach(x=>{ if(x.done===undefined) x.done=true; });
+  games.sort((a,b)=>(b.t||0)-(a.t||0));
+  const P={};
+  games.forEach(x=>x.p.forEach(pl=>{
+    const k=nameKey(pl.n); if(!k) return;
+    const o=P[k]||(P[k]={n:pl.n,g:0,w:0,s:0,f:0,a:0,d:0,b:0,det:0});
+    o.g++; if(x.done&&pl.w) o.w++; o.s+=pl.s||0;
+    if(x.detail){o.det++;o.f+=pl.f||0;o.a+=pl.a||0;o.d+=pl.d||0;o.b+=pl.b||0;}
+  }));
+  const players=Object.values(P).sort((a,b)=>b.w-a.w||b.s-a.s);
+  const byId={};BANK.forEach(q=>byId[qid(q)]=q);
+  const qs=Object.entries(D.stats).map(([id,v])=>({q:byId[id],n:(v&&v.n)||0,c:(v&&v.c)||0})).filter(x=>x.q&&x.n>0);
+  const answered=qs.reduce((t,x)=>t+x.n,0), correct=qs.reduce((t,x)=>t+x.c,0);
+  const cat={};qs.forEach(x=>{cat[x.q.c]=(cat[x.q.c]||0)+x.n;});
+  const rated=qs.filter(x=>x.n>=3);
+  return {games,players,roomsMade,qPlayed:qs.length,answered,correct,
+    cats:Object.entries(cat).sort((a,b)=>b[1]-a[1]).slice(0,6),
+    hard:rated.slice().sort((a,b)=>a.c/a.n-b.c/b.n).slice(0,5),
+    easy:rated.slice().sort((a,b)=>b.c/b.n-a.c/a.n).slice(0,5)};
+}
+const pct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
+function fmtDate(t){ if(!t) return "تاريخ غير معروف"; try{return new Date(t).toLocaleString("ar-SA-u-nu-latn",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});}catch(e){return "";} }
+function statsView(){
+  const back=`<button class="btn ghost" data-go="home">رجوع</button>`;
+  if(GS.state==="loading"||GS.state==="idle") return `<section class="card handoff">${mascot}<div class="muted">جارٍ تحميل الإحصائيات…</div></section>${back}`;
+  const uidBox=AUTH_USER?`<div class="uid-box"><span class="muted">معرّف هذا الحساب:</span><code>${esc(AUTH_USER.uid)}</code><button class="btn ghost small" data-copy-uid>نسخ</button></div>`:"";
+  if(GS.state==="gate") return `<section class="card"><h2>الإحصائيات خاصة بالمدير</h2>
+      <p class="muted">سجّل الدخول بحساب Google الخاص بالمدير لعرض الإحصائيات.</p>
+      <button class="btn" data-admin-in>دخول المدير بحساب Google</button>
+      ${GS.err?`<div class="err">${esc(GS.err)}</div>`:""}</section>${back}`;
+  if(GS.state==="error") return `<section class="card"><h2>الإحصائيات</h2><div class="err">${esc(GS.err)}</div>${uidBox}<button class="btn ghost small" data-gs-reload>حاول مرة أخرى</button></section>${back}`;
+  const X=buildGameStats(), done=X.games.filter(g=>g.done);
+  const tile=(v,l)=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`;
+  const rows=X.players.map((p,i)=>`<tr><td class="rk">${i+1}</td><td class="nm">${esc(p.n)}</td><td>${p.g}</td><td>${p.w}</td><td>${pct(p.w,p.g)}</td><td>${p.s}</td>
+    <td>${p.det?pct(p.f,p.a):"—"}</td><td>${p.det?p.d:"—"}</td><td>${p.det?p.b:"—"}</td></tr>`).join("");
+  const recent=X.games.slice(0,12).map(g=>{const top=g.p.slice().sort((a,b)=>b.s-a.s);
+    const win=g.done?top.filter(x=>x.w).map(x=>esc(x.n)).join(" و "):"";
+    return `<div class="game-row"><div class="gr-top"><span>${fmtDate(g.t)}</span><span class="muted">${g.m==="l"?"جوال واحد":"أونلاين"} · ${g.r} ${g.r>2&&g.r<11?"جولات":"جولة"}${g.tb?` · ${g.tb} كسر تعادل`:""}${g.done?"":" · لم تكتمل"}</span></div>
+      <div class="gr-pl">${top.map(x=>`<span class="${x.w&&g.done?"win":""}">${esc(x.n)} <b>${x.s}</b></span>`).join("")}</div>${win?`<div class="gr-win">🏆 ${win}</div>`:""}</div>`;}).join("");
+  const qList=list=>list.length?list.map(x=>`<div class="q-row"><span class="q-t">${esc(x.q.q)}</span><span class="q-p">${pct(x.c,x.n)} <small>من ${x.n}</small></span></div>`).join(""):`<div class="muted">تحتاج كل سؤال 3 إجابات على الأقل قبل أن يظهر هنا.</div>`;
+  return `<section class="card"><h1>الإحصائيات</h1>
+      <div class="tiles">${tile(done.length,"لعبة مكتملة")}${tile(X.roomsMade,"غرفة أُنشئت")}${tile(X.players.length,"لاعب مختلف")}${tile(X.answered,"إجابة على سؤال")}${tile(X.qPlayed,"سؤال لُعب")}${tile(pct(X.correct,X.answered),"نسبة كشف الحقيقة")}</div>
+      ${GS.data.partial?`<div class="muted">بعض البيانات لم تُقرأ. تأكد من تحديث قواعد Firebase.</div>`:""}</section>
+    <section class="card"><div class="eyebrow">اللاعبون</div>
+      ${X.players.length?`<div class="tbl-wrap"><table class="stbl"><thead><tr><th></th><th>اللاعب</th><th>لعب</th><th>فاز</th><th>نسبة الفوز</th><th>النقاط</th><th>كشف الحقيقة</th><th>خدع غيره</th><th>انخدع</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="muted">«خدع غيره»: كم مرة اختار لاعب آخر كذبته. «انخدع»: كم مرة اختار كذبة. تظهر هذه الأعمدة للألعاب التي لُعبت من الإصدار 17 فما بعد.</div>`:`<div class="muted">لا توجد ألعاب بعد.</div>`}</section>
+    <section class="card"><div class="eyebrow">آخر الألعاب</div>${recent||'<div class="muted">لا توجد ألعاب بعد.</div>'}</section>
+    <section class="card"><div class="eyebrow">أصعب الأسئلة (أقل نسبة كشف)</div>${qList(X.hard)}</section>
+    <section class="card"><div class="eyebrow">أسهل الأسئلة (أعلى نسبة كشف)</div>${qList(X.easy)}</section>
+    ${X.cats.length?`<section class="card"><div class="eyebrow">أكثر الفئات لعباً</div><div class="chips">${X.cats.map(([k,n])=>`<span class="chip">${CATS[k]||k} <small>${n}</small></span>`).join("")}</div></section>`:""}
+    <section class="card">${uidBox}</section>
+    <button class="btn ghost small" data-gs-reload>تحديث</button>${back}`;
+}
 function header(){
   let r="";
   if(["choose","handoff","write","pick","reveal"].includes(S.screen)) r=`<span class="round-pill ${S.round>S.rounds?"tb":""}">${roundLabel(S.round,S.rounds)}</span>`;
@@ -937,9 +1046,11 @@ const VIEWS={
     <button class="btn" data-go="online">العب من جوالك</button>
     <div class="muted" style="text-align:center">كل لاعب على جواله، بنفس الرابط ورمز الغرفة</div>
     <button class="btn pom" data-go="setup">جوال واحد للجميع</button>
-    <div class="muted" style="text-align:center">جهاز واحد يتنقل بين اللاعبين</div>`;
+    <div class="muted" style="text-align:center">جهاز واحد يتنقل بين اللاعبين</div>
+    <button class="btn ghost" data-go="stats">📊 الإحصائيات</button>`;
   },
   online(){ return onlineView(); },
+  stats(){ return statsView(); },
   setup(){
     const pl=S.players.map((p,i)=>`<div class="player-row">
       <input type="text" id="p${i}" value="${esc(p)}" maxlength="16" aria-label="اسم اللاعب ${i+1}" data-pi="${i}">
@@ -1042,6 +1153,9 @@ const VIEWS={
     <button class="btn" id="next" autofocus>${S.round>=S.rounds?(topTie(S.scores,S.players.length)&&S.cats.some(k=>leftIn(k))?"⚔️ جولة كسر التعادل":"النتيجة النهائية"):"الجولة التالية"}</button>`;
   },
   final(){
+    if(!S.saved&&S.round>0){ S.saved=true;
+      saveGame({m:"l",r:S.round,rs:S.rounds,lv:S.level||"all",c:S.cats,out:S.out?1:0,
+        p:S.players.map((n,i)=>({n,s:S.scores[i]||0,...(S.pst&&S.pst[i]||{f:0,d:0,b:0,a:0})}))}); }
     const ranked=rank();
     const top=ranked[0], tie=ranked.filter(p=>p.s===top.s).length>1;
     return `<section class="card handoff">
@@ -1080,7 +1194,7 @@ function startGame(){
   S.cats=S.cats.filter(k=>leftIn(k));
   if(!S.cats.length){S.err="انتهت أسئلة الفئات المختارة. اختر فئات أخرى، أو ابدأ كل الأسئلة من جديد.";return render();}
   try{localStorage.setItem("tamweeh-setup",JSON.stringify({v:2,players:S.players,cats:S.cats,rounds:S.rounds,timer:S.timer,level:S.level}));}catch(e){}
-  S.err=""; S.scores={}; S.round=0;
+  S.err=""; S.scores={}; S.round=0; S.pst={}; S.saved=false;
   nextRound();
 }
 function nextRound(){
@@ -1178,11 +1292,19 @@ function score(){
     if(ch&&ch.owner==="true") g+=2;
     g+=Object.entries(S.picks).filter(([q,v])=>+q!==p&&v>=0&&Array.isArray(S.options[v].owner)&&S.options[v].owner.includes(p)).length;
     S.gains[p]=g; S.scores[p]=(S.scores[p]||0)+g;
+    const st=S.pst[p]||(S.pst[p]={f:0,d:0,b:0,a:0});
+    if(ch){st.a++; if(ch.owner==="true") st.f++; else st.b++;}
+    st.d+=Object.entries(S.picks).filter(([q,v])=>+q!==p&&v>=0&&Array.isArray(S.options[v].owner)&&S.options[v].owner.includes(p)).length;
   });
 }
 
 app.addEventListener("click",e=>{
   const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.gsReload!=null){loadGameStats();return;}
+  if(t.dataset.adminIn!=null){GS.err="";adminSignIn().then(loadGameStats).catch(e=>{GS.err="تعذّر الدخول"+(e&&e.code?" ("+e.code+")":"")+". تأكد من تفعيل Google في Firebase وإضافة نطاق الموقع.";render();});return;}
+  if(t.dataset.copyUid!=null){const u=AUTH_USER&&AUTH_USER.uid; const ok=()=>{t.textContent="تم النسخ ✓";};
+    if(navigator.clipboard) navigator.clipboard.writeText(u).then(ok).catch(()=>prompt("انسخ المعرّف:",u)); else prompt("انسخ المعرّف:",u); return;}
+  if(t.dataset.go==="stats"){stopTimer();S.screen="stats";loadGameStats();return;}
   if(t.dataset.go){stopTimer();S.screen=t.dataset.go;if(t.dataset.go==="online"&&!O.R){O.screen="menu";O.err="";}render();return;}
   if(S.screen==="online"&&onlineClick(t)) return;
   if(t.dataset.endlocal!=null){
@@ -1243,10 +1365,59 @@ function fbInit(){
 let myPid=null;
 try{myPid=localStorage.getItem("tmw-pid");}catch(e){}
 if(!myPid){myPid=Math.random().toString(36).slice(2,12);try{localStorage.setItem("tmw-pid",myPid);}catch(e){}}
+const LEGACY_PID=myPid;
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),ms))]);
+// ================= الهوية: تسجيل دخول خفي لكل جوال، وحساب Google للمدير =================
+let AUTH_USER=null, authPromise=null;
+function whenAuth(){
+  if(authPromise) return authPromise;
+  authPromise=new Promise(resolve=>{
+    if(!fbInit()||!firebase.auth){resolve(null);return;}
+    const au=firebase.auth();
+    let settled=false; const done=u=>{ if(settled) return; settled=true; AUTH_USER=u; if(u){ myPid=u.uid; migrateSeen(); } resolve(u); };
+    setTimeout(()=>done(null),8000); // إن لم يُفعَّل الدخول الخفي بعد، نكمل بالمعرّف القديم
+    au.getRedirectResult().catch(()=>{});
+    const off=au.onAuthStateChanged(u=>{
+      if(u){ off(); done(u); }
+      else au.signInAnonymously().catch(()=>done(null));
+    });
+  });
+  return authPromise;
+}
+const isAdminUser=()=>!!(AUTH_USER&&AUTH_USER.providerData&&AUTH_USER.providerData.some(p=>p.providerId==="google.com"));
+// نقل سجل الأسئلة القديم (قبل تسجيل الدخول) إلى الهوية الجديدة مرة واحدة
+function migrateSeen(){
+  try{
+    if(!LEGACY_PID||LEGACY_PID===myPid||localStorage.getItem("tmw-mig")===myPid){ try{localStorage.setItem("tmw-pid",myPid);}catch(e){} return; }
+    const db=fbInit();
+    db.ref("seen/"+LEGACY_PID).once("value").then(sn=>{const v=sn.val();
+      const done=()=>{try{localStorage.setItem("tmw-mig",myPid);localStorage.setItem("tmw-pid",myPid);}catch(e){}};
+      if(v&&typeof v==="object") db.ref("seen/"+myPid).update(v).then(done).catch(()=>{}); else done();
+    }).catch(()=>{});
+  }catch(e){}
+}
+async function adminSignIn(){
+  const au=firebase.auth(), prov=new firebase.auth.GoogleAuthProvider();
+  try{
+    if(au.currentUser&&au.currentUser.isAnonymous) await au.currentUser.linkWithPopup(prov);
+    else await au.signInWithPopup(prov);
+  }catch(e){
+    if(e&&(e.code==="auth/credential-already-in-use"||e.code==="auth/email-already-in-use")&&e.credential){ await au.signInWithCredential(e.credential); }
+    else if(e&&(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment")){ await au.currentUser.linkWithRedirect(prov); return; }
+    else throw e;
+  }
+  AUTH_USER=au.currentUser; myPid=AUTH_USER.uid;
+}
 function fbRoomApi(){
   const db=fbInit(); if(!db) return null;
-  return {join: async(name)=>{
+  return {
+  claim: async(name)=>{
+    await whenAuth();
+    const r=await withTimeout(db.ref("rooms/"+name+"/host").transaction(v=>(!v||v===myPid)?myPid:undefined),10000);
+    return !!(r&&r.committed);
+  },
+  join: async(name)=>{
+    await whenAuth();
     const roomRef=db.ref("rooms/"+name), base=roomRef.child("peers"), me=base.child(myPid), connRef=db.ref(".info/connected");
     // لا نحذف اللاعب عند انقطاع قصير: نعلّمه غير متصل، ونعيد تثبيت حالته كاملة عند عودة الاتصال
     const full={};
@@ -1325,7 +1496,6 @@ function takeQRoom(k){
   USED.add(id); saveUsed();
   const pids=HS.players.map(p=>p.p);
   pids.forEach(p=>{(SEEN[p]=SEEN[p]||new Set()).add(id);});
-  try{O.R.markSeen(pids,id).catch(()=>{});}catch(e){}
   return q;
 }
 function pres(peer){const x=O.peers.find(q=>q.peer===peer);return x&&x.presence?x.presence:null;}
@@ -1362,7 +1532,13 @@ async function enterRoom(code,host,resume){
   O.err="";O.busy=true;render();
   const room=await roomApi();
   if(!room){O.busy=false;O.err="الخادم غير مضبوط بعد: أضف إعدادات Firebase في الملف.";return render();}
-  try{ O.R=await room.join("tmw-"+code); }
+  try{
+    if(host){ // نحجز الرمز باسمنا، وإن كان محجوزاً لغيرنا نولّد رمزاً جديداً
+      let ok=false; for(let i=0;i<5&&!ok;i++){ ok=await room.claim("tmw-"+code); if(!ok){ if(resume) throw {code:"not-host"}; code=newCode(); } }
+      if(!ok) throw {code:"no-code"};
+    }
+    O.R=await room.join("tmw-"+code);
+  }
   catch(e){O.busy=false;O.err="تعذّر الاتصال بالخادم. تأكد من الإنترنت وحاول مرة أخرى.";if(resume){clearSession();O.screen="menu";}return render();}
   try{localStorage.setItem("tamweeh-name",nm);}catch(e){}
   O.busy=false;O.code=code;O.host=host;O.screen="game";O.g=null;O.gs="";O.key="";O.hostGoneAt=Date.now();
@@ -1492,19 +1668,22 @@ function hostToReveal(){
     if(ch&&ch.o==="T") g+=2;
     g+=Object.entries(H.picks).filter(([q,v])=>+q!==p&&Array.isArray(H.opts[v].o)&&H.opts[v].o.includes(p)).length;
     H.gains[p]=g;H.scores[p]=(H.scores[p]||0)+g;
+    H.pst=H.pst||{}; const st=H.pst[p]||(H.pst[p]={f:0,d:0,b:0,a:0});
+    if(ch){st.a++; if(ch.o==="T") st.f++; else st.b++;}
+    st.d+=Object.entries(H.picks).filter(([q,v])=>+q!==p&&Array.isArray(H.opts[v].o)&&H.opts[v].o.includes(p)).length;
   });
   H.phase="reveal";H.deadline=0;
 }
 function hostAction(a){
   const H=HS;
-  if(a==="start"){if(!H.players.length) return; if(H.players.some(p=>!SEEN[p.p])){H.players.forEach(p=>loadSeenFor(p.p));return;}H.scores={};H.round=0;hostNextRound();}
+  if(a==="start"){if(!H.players.length) return; if(H.players.some(p=>!SEEN[p.p])){H.players.forEach(p=>loadSeenFor(p.p));return;}H.scores={};H.pst={};H.saved=0;H.round=0;hostNextRound();}
   else if(a==="random"&&H.phase==="choose") hostSetQ("random");
   else if(a==="skip"){if(H.phase==="write") hostToPick();else if(H.phase==="pick") hostToReveal();}
   else if(a==="next"&&H.phase==="reveal"){
     const tie=topTie(H.scores,H.players.length);
     if(H.round>=H.rounds&&!(tie&&H.cats.some(k=>remainingIn(0,k)))){H.phase="final";}else hostNextRound();
   }
-  else if(a==="again"&&H.phase==="final"){H.scores={};H.round=0;hostNextRound();}
+  else if(a==="again"&&H.phase==="final"){H.scores={};H.pst={};H.saved=0;H.round=0;hostNextRound();}
   publish();
 }
 function buildG(){
@@ -1526,6 +1705,11 @@ function buildG(){
 }
 function publish(){
   if(!O.R) return;
+  if(HS.phase==="final"&&!HS.saved&&HS.round>0){
+    HS.saved=1;
+    saveGame({m:"o",rc:"tmw-"+O.code,r:HS.round,rs:HS.rounds,lv:HS.level||"all",c:HS.cats,out:HS.out?1:0,
+      p:HS.players.map((pl,i)=>({id:pl.p,n:pl.n,s:HS.scores[i]||0,...(HS.pst&&HS.pst[i]||{f:0,d:0,b:0,a:0})}))});
+  }
   const g=buildG(),s=JSON.stringify(g);
   if(s===lastPub) return;
   lastPub=s;
@@ -1538,7 +1722,8 @@ function setG(g){
   if(gs===O.gs) return;
   O.gs=gs; g=g?normG(JSON.parse(gs)):null;
   O.g=g;
-  if(g){const k=g.r+":"+g.ph; if(k!==O.key){O.key=k;O.deadline=g.rem?Date.now()+g.rem:0;O.myA=O.sentA=0;O.err="";}}
+  if(g){const k=g.r+":"+g.ph; if(k!==O.key){O.key=k;O.deadline=g.rem?Date.now()+g.rem:0;O.myA=O.sentA=0;O.err="";
+    if(g.ph==="write"&&g.q&&myIdx()>=0&&O.R) try{O.R.markSeen([myPid],qid({q:g.q[1]})).catch(()=>{});}catch(e){} }}
   render();
 }
 
