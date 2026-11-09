@@ -46,6 +46,7 @@ h1{font-size:1.9rem} h2{font-size:1.45rem}
 .eyebrow{font-size:.78rem;color:var(--saffron);letter-spacing:.04em}
 .muted{color:var(--muted);font-size:.9rem}
 .q{font-size:1.2rem;font-weight:500;line-height:1.7}
+.hint{display:flex;gap:6px;align-items:flex-start;background:rgba(255,200,80,.1);border:1px dashed rgba(255,200,80,.45);border-radius:10px;padding:7px 10px;margin:8px 0 10px;font-size:.92rem;line-height:1.6}
 .cat-chip{align-self:flex-start;font-size:.78rem;background:var(--ink-3);border-radius:999px;padding:3px 12px;color:var(--sky)}
 label{font-size:.9rem;color:var(--muted)}
 input[type=text]{width:100%;font:inherit;font-size:1.05rem;color:var(--paper);background:var(--ink);
@@ -159,7 +160,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -1112,6 +1113,7 @@ const VIEWS={
       ${S.timer?`<div class="timer"><div class="bar"><div class="fill" id="tfill"></div></div><span class="sec" id="tsec">${S.timer}</span></div>`:""}
       <span class="cat-chip">${CATS[S.cur.c]}</span>
       <div class="q">${esc(S.cur.q)}</div>
+      ${hintHTML(S.cur)}
       <label for="fake">${esc(who)}، اكتب إجابة مزيفة تخدع بها الآخرين</label>
       <input type="text" id="fake" maxlength="60" autocomplete="off" autofocus placeholder="كذبة مقنعة…" value="${esc(S.err?S.draft||"":"")}">
       <div class="err" role="alert">${esc(S.err)}</div>
@@ -1256,9 +1258,36 @@ function fakeError(v){
   if(isTruth(v,S.cur)) return "هذه قريبة جداً من الإجابة الصحيحة! اكتب كذبة مختلفة.";
   return "";
 }
+// ================= تلميح شكل الإجابة: حتى تُكتب الكذبات بنفس شكل الحقيقة فلا تنكشف =================
+const QBYTEXT={}; BANK.forEach(q=>{QBYTEXT[q.q]=q;});
+const NUM_RE=/^[-+−]?[0-9٠-٩][0-9٠-٩.,٫]*%?$/;
+function wordsAr(n){return n===1?"كلمة واحدة":n===2?"كلمتان":n<=10?n+" كلمات":n+" كلمة";}
+function answerHint(q){
+  if(!q||!q.a) return "";
+  const toks=q.a.trim().split(/\s+/), kind=t=>NUM_RE.test(t)?"n":/[A-Za-z]/.test(t)?"e":"a";
+  const ks=toks.map(kind);
+  if(ks.length===1&&ks[0]==="n"){
+    const isYear=/^[0-9]{3,4}$/.test(toks[0])&&/عام|سنة|متى|تاريخ|أي سنة|في أي/.test(q.q)&&+toks[0]>500;
+    return isYear?"الجواب <b>سنة</b>، اكتبها <b>بالأرقام الإنجليزية</b> (مثل 0123)":"الجواب <b>رقم</b>، اكتبه <b>بالأرقام الإنجليزية</b> (0123)"+(/%$/.test(toks[0])?" مع علامة %":"");
+  }
+  // أرقام مكتوبة بالحروف (سبع قارات، خمسة) في أسئلة «كم»
+  const NW=/^(و?ال)?(واحد|واحدة|اثن\S*|ثلاث\S*|أربع\S*|خمس\S*|ست|ستة|ستون|ستين|سبع\S*|ثمان\S*|تسع\S*|عشر\S*|مئ\S*|مائ\S*|ألف|آلاف|مليون|ملايين|مرتان|يومان|عامان|سنتان)$/;
+  if(/(^|[\s«(])كم\s/.test(q.q)&&!ks.includes("n")&&!ks.includes("e")&&toks.some(t=>NW.test(t)))
+    return `الجواب <b>رقم مكتوب بالحروف العربية</b> لا بالأرقام${ks.length===2?"، كلمتان (العدد ثم المعدود)":ks.length>2?"، "+wordsAr(ks.length):" (كلمة واحدة)"}`;
+  if(ks.every(k=>k==="a")) return `الجواب <b>بالعربية</b>: ${wordsAr(ks.length)}`;
+  if(ks.every(k=>k==="e")) return ks.length===1&&toks[0].length===1?"الجواب <b>حرف إنجليزي واحد</b>":`الجواب <b>بالإنجليزية</b>: ${ks.length===1?"كلمة واحدة":ks.length===2?"كلمتان":ks.length+" كلمات"}`+(ks.length===1&&toks[0].length<=3?(toks[0].length===2?" (حرفان)":" (3 أحرف)"):"");
+  // خليط: نصف الترتيب، مثل «رقم + كلمة عربية»
+  const parts=[]; let i=0;
+  while(i<ks.length){let j=i;while(j<ks.length&&ks[j]===ks[i]&&ks[i]!=="n")j++; if(j===i)j=i+1; const n=j-i;
+    parts.push(ks[i]==="n"?"رقم بالأرقام الإنجليزية":ks[i]==="e"?(n===1?"كلمة إنجليزية":n+" كلمات إنجليزية"):(n===1?"كلمة عربية":n===2?"كلمتان عربيتان":n+" كلمات عربية")); i=j;}
+  return "شكل الجواب: <b>"+parts.join(" + ")+"</b>";
+}
+const hintHTML=q=>{const h=answerHint(q);return h?`<div class="hint"><span>💡</span><span>${h}</span></div>`:"";};
+// نوحّد الأرقام العربية الهندية (١٢٣) إلى الإنجليزية مثل الحقيقة
+const toLatinDigits=v=>v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/٫/g,".");
 function submitFake(timedOut){
   const el=document.getElementById("fake");
-  const v=((el&&el.value)||"").trim(); S.draft=v;
+  const v=toLatinDigits(((el&&el.value)||"").trim()); S.draft=v;
   const er=fakeError(v);
   if(er&&!timedOut){S.err=er;return render();}
   stopTimer();
@@ -1729,7 +1758,7 @@ function setG(g){
 
 // ---------- أفعال اللاعب ----------
 function oSendFake(){
-  const el=document.getElementById("ofake"),v=((el&&el.value)||"").trim();
+  const el=document.getElementById("ofake"),v=toLatinDigits(((el&&el.value)||"").trim());
   if(!v.length){O.err="اكتب إجابتك أولاً.";return render();}
   O.err="";O.myA=Date.now();O.sentA=O.myA;
   O.R.presence({f:{r:O.g.r,t:v.slice(0,40),a:O.myA}}).catch(()=>{});
@@ -1832,7 +1861,7 @@ function gameViewInner(){
     let body;
     if(done) body=`<div class="muted">أرسلت كذبتك ✓ بانتظار الآخرين</div>`;
     else if(O.sentA&&O.sentA===O.myA&&!rejected) body=`<div class="muted">جارٍ إرسال كذبتك…</div>`;
-    else body=`<label for="ofake">اكتب إجابة مزيفة تخدع بها الآخرين</label>
+    else body=`${hintHTML(QBYTEXT[g.q[1]])}<label for="ofake">اكتب إجابة مزيفة تخدع بها الآخرين</label>
       <input type="text" id="ofake" data-keep maxlength="40" autocomplete="off" placeholder="كذبة مقنعة…">
       <div class="err" role="alert">${rejected?"هذه قريبة جداً من الإجابة الصحيحة! اكتب كذبة مختلفة.":esc(O.err)}</div>
       <button class="btn" data-o="send">أرسل إجابتي</button>`;
