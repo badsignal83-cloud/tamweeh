@@ -54,6 +54,7 @@ h1{font-size:1.9rem} h2{font-size:1.45rem}
 .qimg.map .ring{fill:none;stroke:#e23b3b;stroke-width:2.5}
 .qimg.map .dot{fill:#e23b3b;stroke:#fff;stroke-width:1.8}.qimg.map .dot-o{fill:rgba(226,59,59,.25)}
 .qimg.flag{max-width:260px;box-shadow:0 2px 10px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15)}
+.stepper{display:flex;align-items:center;gap:14px}.stepper .chip{width:44px;height:44px;padding:0;font-size:1.4rem;line-height:1}.stepper .chip:disabled{opacity:.35}.stepper b{min-width:90px;text-align:center;font-size:1.05rem}
 .hint{display:flex;gap:6px;align-items:flex-start;background:rgba(255,200,80,.1);border:1px dashed rgba(255,200,80,.45);border-radius:10px;padding:7px 10px;margin:8px 0 10px;font-size:.92rem;line-height:1.6}
 .cat-chip{align-self:flex-start;font-size:.78rem;background:var(--ink-3);border-radius:999px;padding:3px 12px;color:var(--sky)}
 label{font-size:.9rem;color:var(--muted)}
@@ -168,7 +169,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 20;
+const APP_VERSION = 21;
 const BANK = [
   // لغة وأدب
   {l:3,c:"lang",q:"ماذا كانت تعني كلمة «الهاتف» في الفصحى القديمة؟",a:"صوت يُسمع ولا يُرى صاحبه",d:["الطبل الذي يُقرع لإعلان الحرب","الحمام الزاجل الذي يحمل الرسائل","الرسول الذي يحمل الأخبار","الجبل العالي الذي يُنادى منه","صوت الرعد"]},
@@ -1084,7 +1085,7 @@ const VIEWS={
       <input type="text" id="p${i}" value="${esc(p)}" maxlength="16" aria-label="اسم اللاعب ${i+1}" data-pi="${i}">
       ${S.players.length>1?`<button class="icon-btn" data-del="${i}" aria-label="حذف اللاعب">✕</button>`:""}</div>`).join("");
     const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
-    const rd=[3,5,8,10].map(n=>`<button class="chip" data-rounds="${n}" aria-pressed="${S.rounds===n}">${n} جولات</button>`).join("");
+    const rd=roundsStepper();
     const tm=[[30,"30 ثانية"],[45,"45 ثانية"],[60,"دقيقة"],[0,"بدون وقت"]].map(([n,l])=>`<button class="chip" data-timer="${n}" aria-pressed="${S.timer===n}">${l}</button>`).join("");
     return `<section class="card">
       <h1>لعبة جديدة</h1>
@@ -1239,7 +1240,7 @@ function chooseCat(k){
   S.phase="write"; S.turn=0; S.screen="handoff"; render();
 }
 // أخطاء إملائية شائعة تُعامل كحرف واحد: ض/ظ/د، ذ/ز/د، ث/س/ت، ص/س، ط/ت
-const CONF=new Set();["ضظ","ضد","ظز","ذز","ذد","ثس","ثت","صس","طت"].forEach(p=>{CONF.add(p);CONF.add(p[1]+p[0]);});
+const CONF=new Set();["ضظ","ضد","ظز","ذز","ذد","ثس","ثت","صس","طت","غج"].forEach(p=>{CONF.add(p);CONF.add(p[1]+p[0]);});
 // مسافة التحرير: كم حرفاً يجب تغييره لتصبح الكلمة الأولى هي الثانية
 function lev(a,b){
   if(a===b) return 0; if(!a.length) return b.length; if(!b.length) return a.length;
@@ -1250,6 +1251,8 @@ function lev(a,b){
   return prev[b.length];
 }
 const SIM_RATIO=0.8; // 80% تشابه في الحروف وترتيبها = نفس الإجابة
+const roundsWord=n=>n===1?"جولة واحدة":n===2?"جولتان":n<=10?n+" جولات":n+" جولة";
+const roundsStepper=()=>`<div class="stepper"><button class="chip" data-rstep="-1" ${S.rounds<=1?"disabled":""} aria-label="أقل">−</button><b>${roundsWord(S.rounds)}</b><button class="chip" data-rstep="1" ${S.rounds>=12?"disabled":""} aria-label="أكثر">+</button></div>`;
 function sim(a0,b0){
   const a=a0.replace(/ /g,""), b=b0.replace(/ /g,"");
   const digits=/\d/.test(a)&&/\d/.test(b);
@@ -1260,6 +1263,8 @@ function sim(a0,b0){
     const x=ta.filter(t=>!tb.includes(t)).join(""), y=tb.filter(t=>!ta.includes(t)).join("");
     const m=Math.max(x.length,y.length);
     if(x&&y&&m>=4&&1-lev(x,y)/m>=SIM_RATIO) return true;
+    // حرف ناقص أو زائد فقط (مثل «جزر لقمر» و«جزر القمر»)
+    if(x&&y&&x.length<a.length&&Math.min(x.length,y.length)>=3&&Math.abs(x.length-y.length)===1&&lev(x,y)===1) return true;
     // حروف المد (ا و ي) تُكتب وتُحذف كثيراً: «نيوزيلندا» و«نيوزيلاند» لهما نفس الحروف الأساسية
     const sx=x.replace(/[اويء]/g,""), sy=y.replace(/[اويء]/g,""), sm=Math.max(sx.length,sy.length);
     if(sx.length>=4&&sy.length>=4&&(sx===sy||(sm>=5&&1-lev(sx,sy)/sm>=SIM_RATIO))) return true;
@@ -1297,24 +1302,22 @@ const QBYTEXT={}; BANK.forEach(q=>{QBYTEXT[q.q]=q;});
 const NUM_RE=/^[-+−]?[0-9٠-٩][0-9٠-٩.,٫]*%?$/;
 function wordsAr(n){return n===1?"كلمة واحدة":n===2?"كلمتان":n<=10?n+" كلمات":n+" كلمة";}
 function answerHint(q){
-  if(!q||!q.a) return "";
+  if(!q||!q.a||q.c==="emoji") return "";
   const toks=q.a.trim().split(/\s+/), kind=t=>NUM_RE.test(t)?"n":/[A-Za-z]/.test(t)?"e":"a";
-  const ks=toks.map(kind);
+  const ks=toks.map(kind), cnt=n=>n===1?"كلمة":n===2?"كلمتان":n+" كلمات";
   if(ks.length===1&&ks[0]==="n"){
-    const isYear=/^[0-9]{3,4}$/.test(toks[0])&&/عام|سنة|متى|تاريخ|أي سنة|في أي/.test(q.q)&&+toks[0]>500;
-    return isYear?"الجواب <b>سنة</b>، اكتبها <b>بالأرقام الإنجليزية</b> (مثل 0123)":"الجواب <b>رقم</b>، اكتبه <b>بالأرقام الإنجليزية</b> (0123)"+(/%$/.test(toks[0])?" مع علامة %":"");
+    if(/%$/.test(toks[0])) return "نسبة %";
+    const isYear=/^[0-9]{3,4}$/.test(toks[0])&&/عام|سنة|متى|تاريخ/.test(q.q)&&+toks[0]>500;
+    return isYear?"سنة · 123":"رقم · 123";
   }
-  // أرقام مكتوبة بالحروف (سبع قارات، خمسة) في أسئلة «كم»
   const NW=/^(و?ال)?(واحد|واحدة|اثن\S*|ثلاث\S*|أربع\S*|خمس\S*|ست|ستة|ستون|ستين|سبع\S*|ثمان\S*|تسع\S*|عشر\S*|مئ\S*|مائ\S*|ألف|آلاف|مليون|ملايين|مرتان|يومان|عامان|سنتان)$/;
-  if(/(^|[\s«(])كم\s/.test(q.q)&&!ks.includes("n")&&!ks.includes("e")&&toks.some(t=>NW.test(t)))
-    return `الجواب <b>رقم مكتوب بالحروف العربية</b> لا بالأرقام${ks.length===2?"، كلمتان (العدد ثم المعدود)":ks.length>2?"، "+wordsAr(ks.length):" (كلمة واحدة)"}`;
-  if(ks.every(k=>k==="a")) return `الجواب <b>بالعربية</b>: ${wordsAr(ks.length)}`;
-  if(ks.every(k=>k==="e")) return ks.length===1&&toks[0].length===1?"الجواب <b>حرف إنجليزي واحد</b>":`الجواب <b>بالإنجليزية</b>: ${ks.length===1?"كلمة واحدة":ks.length===2?"كلمتان":ks.length+" كلمات"}`+(ks.length===1&&toks[0].length<=3?(toks[0].length===2?" (حرفان)":" (3 أحرف)"):"");
-  // خليط: نصف الترتيب، مثل «رقم + كلمة عربية»
+  if(/(^|[\s«(])كم\s/.test(q.q)&&ks.every(k=>k==="a")&&toks.some(t=>NW.test(t))) return "رقم بالحروف"+(ks.length>1?" · "+cnt(ks.length):"");
+  if(ks.every(k=>k==="a")) return cnt(ks.length);
+  if(ks.every(k=>k==="e")) return ks.length===1&&toks[0].length===1?"حرف English":"English · "+cnt(ks.length);
   const parts=[]; let i=0;
   while(i<ks.length){let j=i;while(j<ks.length&&ks[j]===ks[i]&&ks[i]!=="n")j++; if(j===i)j=i+1; const n=j-i;
-    parts.push(ks[i]==="n"?"رقم بالأرقام الإنجليزية":ks[i]==="e"?(n===1?"كلمة إنجليزية":n+" كلمات إنجليزية"):(n===1?"كلمة عربية":n===2?"كلمتان عربيتان":n+" كلمات عربية")); i=j;}
-  return "شكل الجواب: <b>"+parts.join(" + ")+"</b>";
+    parts.push(ks[i]==="n"?"123":ks[i]==="e"?"English":cnt(n)); i=j;}
+  return parts.join(" + ");
 }
 const hintHTML=q=>{const h=answerHint(q);return h?`<div class="hint"><span>💡</span><span>${h}</span></div>`:"";};
 // نوحّد الأرقام العربية الهندية (١٢٣) إلى الإنجليزية مثل الحقيقة
@@ -1378,6 +1381,7 @@ app.addEventListener("click",e=>{
   else if(t.dataset.del!=null){S.players.splice(+t.dataset.del,1);render();}
   else if(t.dataset.cat){const k=t.dataset.cat;S.cats=S.cats.includes(k)?S.cats.filter(c=>c!==k):[...S.cats,k];render();}
   else if(t.dataset.rounds){S.rounds=+t.dataset.rounds;render();}
+  else if(t.dataset.rstep){S.rounds=Math.max(1,Math.min(12,(S.rounds||5)+ +t.dataset.rstep));render();}
   else if(t.dataset.timer!=null){S.timer=+t.dataset.timer;render();}
   else if(t.dataset.level){S.level=t.dataset.level;try{const sv=JSON.parse(localStorage.getItem("tamweeh-setup")||"{}");sv.level=S.level;localStorage.setItem("tamweeh-setup",JSON.stringify(sv));}catch(e){}render();}
   else if(t.dataset.resetq!=null){if(S.resetArm){USED.clear();saveUsed();S.resetArm=false;}else S.resetArm=true;render();}
@@ -1807,7 +1811,7 @@ function oChoose(k){
 // ---------- الواجهات ----------
 const settingsHTML=()=>{
   const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
-  const rd=[3,5,8,10].map(n=>`<button class="chip" data-rounds="${n}" aria-pressed="${S.rounds===n}">${n} جولات</button>`).join("");
+  const rd=roundsStepper();
   const tm=[[30,"30 ثانية"],[45,"45 ثانية"],[60,"دقيقة"],[0,"بدون وقت"]].map(([n,l])=>`<button class="chip" data-timer="${n}" aria-pressed="${S.timer===n}">${l}</button>`).join("");
   return `${catChipsHTML()}
     <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
