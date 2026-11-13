@@ -151,6 +151,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 .mrole{display:flex;gap:12px;align-items:center;margin:8px 0}.mrole>span{font-size:2.6rem}.mrole b{display:block;font-family:var(--display);font-size:1.5rem;color:var(--saffron)}.mrole small{color:var(--muted);line-height:1.5}
 .mlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mp{border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;gap:2px}.mp.dead{opacity:.55}.mp.me{border-color:var(--saffron)}.mp small{color:var(--muted)}
 .mev{margin:6px 0;line-height:1.6}.mclock{font-family:var(--display);font-size:2.6rem;text-align:center;color:var(--saffron);direction:ltr}
+.help h3{font-family:var(--display);color:var(--saffron);margin:14px 0 6px;font-size:1.15rem}.help p{line-height:1.8;margin:6px 0}.help .stbl{width:100%;table-layout:fixed}.help .stbl td,.help .stbl th{white-space:normal;word-break:break-word;font-size:.82rem;line-height:1.5;vertical-align:top}
 .hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .xbtn{font:inherit;font-size:.72rem;line-height:1;padding:5px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
 .xbtn.armed{background:var(--pom);border-color:var(--pom);color:#fff}
@@ -192,7 +193,7 @@ input[type=text]:focus{outline:none;border-color:var(--saffron)}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 39;
+const APP_VERSION = 42;
 const MAX_PLAYERS = 12;
 const BANK = [
   // لغة وأدب
@@ -947,7 +948,7 @@ function modeChipsHTML(online){
 const RULES={
   tmw:`<li>في كل جولة يختار لاعب فئة السؤال بالتناوب.</li><li>يظهر سؤال غريب، ويكتب كل لاعب إجابة مزيفة مقنعة دون أن يراها أحد.</li><li>تُخلط الإجابات المزيفة مع الصحيحة، ويختار كل لاعب ما يظنه الحقيقة.</li><li>نقطتان لمن يكشف الحقيقة، ونقطة لك عن كل لاعب يقع في كذبتك.</li>`,
   mafia:`<li>كل لاعب يستلم دوراً سرياً على جواله: مافيا، أو الحامي، أو العمدة، أو القنّاص (مع أكثر من 8 لاعبين)، أو مواطن.</li><li>في الليل تختار المافيا ضحية، والحامي يحمي لاعباً (ولو نفسه).</li><li>في النهار نقاش ثم تصويت علني لإعدام مشتبه. صوت العمدة بصوتين سراً، والتعادل يعيد التصويت بين المتعادلين مرة واحدة.</li><li>يُكشف دور كل من يموت، والأموات يتفرجون ويرون كل الأدوار.</li><li>تفوز المدينة بإخراج كل المافيا، وتفوز المافيا إذا صار عددها مثل عدد البقية.</li>`,
-  bet:`<li>سؤال جوابه رقم، وكل لاعب يكتب تقديره سراً.</li><li>تُرتَّب التقديرات من الأصغر للأكبر، ومعها خانة «أصغر من الكل».</li><li>كل لاعب يراهن على الخانة التي يظنها <b>الأقرب للجواب دون أن تتجاوزه</b>، ويمكنه زيادة رهانه من نقاطه.</li><li>الخانة الرابحة تدفع حسب مضاعفها (×2 إلى ×6)، والرهان الإضافي يُخسر إن أخطأت، وصاحب التقدير الرابح يأخذ 3 نقاط.</li>`};
+  bet:`<li>سؤال جوابه رقم، وكل لاعب يكتب تقديره سراً.</li><li>تُرتَّب التقديرات من الأصغر للأكبر، ومعها خانة «أصغر من الكل».</li><li>كل لاعب يراهن على الخانة التي يظنها <b>الأقرب للجواب دون أن تتجاوزه</b>، ويمكنه زيادة رهانه من نقاطه.</li><li>الخانة الرابحة تدفع حسب مضاعفها (من ×2 في الوسط إلى ×4 في الأطراف و«أصغر من الكل»)، والرهان الإضافي يُخسر إن أخطأت، وصاحب التقدير الرابح يأخذ 3 نقاط.</li>`};
 function setMode(m){
   if(m===S.mode) return;
   if(m==="mafia"||S.mode==="mafia"){ S.mode=m; if(m!=="bet") return; }
@@ -1180,7 +1181,60 @@ function tick(){
   if(left<=0){stopTimer(); if(S.screen==="write") submitFake(true); else if(S.screen==="pick") pick(-1);}
 }
 
+const HELP={
+  tmw:{t:"🎭 تمويه",b:`<p>لعبة خداع: تكذب لتخدع أصحابك، وتكشف الحقيقة بين كذباتهم.</p>
+    <h3>الجولة</h3><ol class="rules">
+    <li><b>الفئة:</b> لاعب يختار فئة السؤال، والدور يتنقل بينكم كل جولة.</li>
+    <li><b>الكذبة:</b> يظهر سؤال غريب، مثل «ماذا كانت تعني كلمة السُّفرة في الأصل؟». كل لاعب يكتب جواباً مزيفاً مقنعاً، والتلميح يخبرك بلغة الكتابة وشكل الجواب حتى تشبه كذبتك الحقيقة.</li>
+    <li><b>الاختيار:</b> تُخلط كذباتكم مع الجواب الصحيح ومع خيارات خادعة من اللعبة، وكل لاعب يختار ما يظنه الحقيقة. كذبتك لا تظهر لك.</li>
+    <li><b>الكشف:</b> الحقيقة بالأخضر، وتحت كل خيار صاحبه ومن اختاره.</li></ol>
+    <h3>النقاط</h3><ul class="rules"><li><b>+2</b> إذا اخترت الحقيقة.</li><li><b>+1</b> عن كل لاعب اختار كذبتك.</li></ul>
+    <h3>تنبيهات</h3><ul class="rules"><li>إذا كتبت الجواب الصحيح أو شيئاً قريباً جداً منه (مرادف، خطأ إملائي، نفس الرقم بصيغة أخرى، نفس الاسم بالإنجليزي) ترفضه اللعبة وتطلب كذبة أخرى.</li>
+    <li>إذا تشابهت كذبتك مع كذبة لاعب آخر تصبحان خياراً واحداً لكما معاً.</li><li>عند التعادل في النهاية تُلعب «جولة كسر التعادل» حتى يتميز فائز.</li></ul>`},
+  bet:{t:"🎲 كم تراهن؟",b:`<p>لا تحتاج أن تعرف الجواب لتفوز. المهم أن تعرف أي تقدير بين تقديرات الجميع هو الأقرب، وتراهن عليه.</p>
+    <h3>الجولة</h3><ol class="rules">
+    <li><b>التقدير:</b> سؤال جوابه رقم، مثل «كم ارتفاع برج خليفة بالمتر؟». كل لاعب يكتب تقديره سراً.</li>
+    <li><b>الخانات:</b> تُرتَّب التقديرات من الأصغر للأكبر، ومعها خانة «أصغر من الكل». كل خانة لها مضاعف: الوسط ×2، والأطراف حتى ×4، و«أصغر من الكل» ×4.</li>
+    <li><b>الرهان:</b> كل لاعب يراهن على الخانة التي يظنها <b>الأقرب للجواب دون أن تتجاوزه</b>، ولو لم تكن تقديره. ويستطيع زيادة رهانه من نقاطه.</li>
+    <li><b>الكشف:</b> يظهر الجواب، وتتلون الخانة الرابحة بالأخضر.</li></ol>
+    <h3>مثال</h3><p>التقديرات: 450، 600، 850، 1200 — والجواب 828. أقرب تقدير 850 لكنه <b>تجاوز</b> الجواب، فالرابحة <b>600</b> (×2).</p>
+    <table class="stbl"><tr><th>اللاعب</th><th>رهانه</th><th>النتيجة</th></tr>
+    <tr><td>علي (تقديره 600)</td><td>600 بلا زيادة</td><td>+2 للرهان +3 لتقديره = <b>+5</b></td></tr>
+    <tr><td>محمد</td><td>600 وزيادة +2</td><td><span dir="ltr">(1+2) × 2 = <b>+6</b></span></td></tr>
+    <tr><td>سارة</td><td>850 وزيادة +3</td><td>خسرت الزيادة <b>−3</b></td></tr>
+    <tr><td>معتز</td><td>أصغر من الكل</td><td><b>0</b></td></tr></table>
+    <h3>النقاط</h3><ul class="rules"><li><b>الرهان الأساسي مجاني:</b> إن أصبت تربح قيمة المضاعف، وإن أخطأت لا تخسر شيئاً.</li>
+    <li><b>الزيادة:</b> تُضرب في المضاعف إن أصبت، وتُخصم من نقاطك إن أخطأت. لا تنزل نقاطك تحت الصفر.</li>
+    <li><b>صاحب التقدير الرابح</b> يأخذ +3 حتى لو راهن على خانة أخرى.</li>
+    <li><b>«أصغر من الكل»</b> تربح إذا تجاوزت كل التقديرات الجواب. مضاعفها ×4 (أقصى ربح منها 24 نقطة).</li>
+    <li><b>الزيادة</b> من +1 إلى +5 فقط على أي خانة.</li>
+    <li>من لا يراهن قبل انتهاء الوقت يأخذ 0 من الرهان.</li></ul>
+    <h3>نصائح</h3><ul class="rules"><li>زِد رهانك فقط حين تكون واثقاً.</li><li>إذا شعرت أن الجميع بالغوا، جرّب «أصغر من الكل».</li><li>المتأخر في النقاط يحتاج الزيادة ليلحق، والمتقدم يكفيه الرهان الآمن.</li></ul>`},
+  mafia:{t:"🕵️ المافيا",b:`<p>مدينة فيها مافيا مخفية. المافيا تقتل في الليل، والمدينة تحاول كشفهم بالنقاش والتصويت في النهار. الجوال هو الراوي. تحتاج 5 لاعبين على الأقل، كل لاعب على جواله.</p>
+    <h3>الأدوار</h3><table class="stbl"><tr><th>الدور</th><th>قدرته</th></tr>
+    <tr><td>🔪 المافيا</td><td>يعرفون بعضهم، ويتفقون كل ليلة على قتل لاعب. عددهم: 1 مع 5–6 لاعبين، و2 مع 7–9، و3 مع 10–12.</td></tr>
+    <tr><td>🛡️ الحامي</td><td>كل ليلة يحمي لاعباً من القتل، ولو نفسه، ولو نفس اللاعب كل ليلة.</td></tr>
+    <tr><td>🎩 العمدة</td><td>من المدينة، صوته بصوتين في التصويت، ولا يعرف أحد أنه العمدة.</td></tr>
+    <tr><td>🎯 القنّاص</td><td>يظهر مع أكثر من 8 لاعبين. من المدينة، ومعه طلقة واحدة طوال اللعبة يستخدمها في النهار لقتل أي لاعب، ويُكشف عندها أنه القنّاص.</td></tr>
+    <tr><td>👤 مواطن</td><td>لا قدرة خاصة: النقاش والتصويت.</td></tr></table>
+    <h3>سير اللعبة</h3><ol class="rules">
+    <li><b>الدور:</b> كل لاعب يرى دوره سراً على جواله ويضغط «فهمت دوري».</li>
+    <li><b>الليل:</b> المافيا تختار ضحية (إذا اختلفوا يُختار الأكثر، وعند التعادل بالقرعة)، والحامي يختار من يحمي. البقية يضغطون «أنا نائم» حتى لا يُعرف من يتحرك.</li>
+    <li><b>الصباح:</b> يُعلن من قُتل ويُكشف دوره، أو أنه لم يمت أحد إذا أنقذه الحامي.</li>
+    <li><b>النقاش:</b> وقت محدد (3 إلى 15 دقيقة)، والمضيف يستطيع إضافة دقائق أو بدء التصويت مبكراً.</li>
+    <li><b>التصويت:</b> علني، كل حي يصوّت على من يُعدَم، ويمكنه تغيير صوته حتى يصوّت الجميع. صاحب أكثر الأصوات يُعدم ويُكشف دوره. التعادل يعيد التصويت بين المتعادلين فقط، وإن تعادلوا مرة ثانية لا يُعدم أحد.</li>
+    <li>ثم ليل جديد، وهكذا.</li></ol>
+    <h3>الفوز</h3><ul class="rules"><li><b>المدينة</b> تفوز بإخراج كل المافيا.</li><li><b>المافيا</b> تفوز إذا صار عددها مثل عدد البقية أو أكثر.</li></ul>
+    <h3>الأموات</h3><p>من يموت يصبح متفرجاً: يرى كل الأدوار وما يحدث في الليل، لكن لا يتكلم ولا يصوّت.</p>`}
+};
+const helpBtn=()=>`<button class="btn ghost small" data-help="${S.mode||"tmw"}">❓ كيف ألعب؟</button>`;
 const VIEWS={
+  help(){
+    const k=S.helpK||"tmw";
+    return `<section class="card"><div class="chips">${Object.entries(HELP).map(([x,h])=>`<button class="chip" data-help="${x}" aria-pressed="${x===k}">${h.t}</button>`).join("")}</div></section>
+      <section class="card help">${HELP[k].b}</section>
+      <button class="btn ghost" data-helpback>رجوع</button>`;
+  },
   home(){
     return `<section class="card">
       <h1>كيف تحبون تلعبون؟</h1>
@@ -1192,6 +1246,7 @@ const VIEWS={
     <div class="muted" style="text-align:center">كل لاعب على جواله، بنفس الرابط ورمز الغرفة</div>
     <button class="btn pom" data-go="setup">جوال واحد للجميع</button>
     <div class="muted" style="text-align:center">جهاز واحد يتنقل بين اللاعبين</div>
+    <button class="btn ghost" data-help="tmw">❓ كيف ألعب؟</button>
     <button class="btn ghost" data-go="stats">📊 الإحصائيات</button>`;
   },
   online(){ return onlineView(); },
@@ -1207,7 +1262,7 @@ const VIEWS={
     return `<section class="card">
       <h1>لعبة جديدة</h1>
       ${modeChipsHTML(false)}
-      <ol class="rules">${RULES[S.mode==="bet"?"bet":"tmw"]}</ol>
+      <ol class="rules">${RULES[S.mode==="bet"?"bet":"tmw"]}</ol>${helpBtn()}
     </section>
     <section class="card">
       <div class="eyebrow">اللاعبون (${S.players.length} من ${MAX_PLAYERS})</div>
@@ -1349,7 +1404,7 @@ const fmtNum=v=>v==null||v===""?"":Number(v).toLocaleString("en-US",{maximumFrac
 function betSlots(gs){
   const m=new Map(); Object.entries(gs).forEach(([p,v])=>{v=parseNum(v); if(!isFinite(v)) return; if(!m.has(v)) m.set(v,[]); m.get(v).push(+p);});
   const vs=[...m.keys()].sort((a,b)=>a-b), n=vs.length;
-  return [{t:"أصغر من الكل",v:null,o:[],od:6,sm:1},...vs.map((v,i)=>({t:fmtNum(v),v,o:m.get(v),od:Math.min(5,2+Math.floor(Math.abs(i-(n-1)/2)))}))];
+  return [{t:"أصغر من الكل",v:null,o:[],od:SMALL_OD,sm:1},...vs.map((v,i)=>({t:fmtNum(v),v,o:m.get(v),od:Math.min(4,2+Math.floor(Math.abs(i-(n-1)/2)))}))];
 }
 // الرابح: أكبر تقدير لا يتجاوز الجواب، وإن تجاوزت كل التقديرات الجواب ربحت «أصغر من الكل»
 function betWinIdx(sl,ans){ let w=0; sl.forEach((x,i)=>{ if(!x.sm&&x.v<=ans) w=i; }); return w; }
@@ -1362,7 +1417,9 @@ function betGains(sl,win,bets,scores,n){
   }
   return g;
 }
-const STAKES=[0,1,2,3,5,10];
+const STAKES=[0,1,2,3,4,5], SMALL_OD=4, SMALL_MAX=5;
+// الزيادة لا تتجاوز +5 على أي خانة
+const capStake=(slot,x)=>Math.max(0,Math.min(x,SMALL_MAX));
 const stakeHTML=(cur,max,attr)=>`<div class="eyebrow">زِد رهانك من نقاطك؟ (تخسر الزيادة إن أخطأت)</div><div class="chips">${STAKES.filter(x=>x<=max).map(x=>`<button class="chip" ${attr}="${x}" aria-pressed="${cur===x}">${x?"+"+x:"بدون زيادة"}</button>`).join("")}</div>`;
 function betPickGrid(sl,attr,mine){
   return `<div class="muted" style="font-size:.8rem">مرتبة من الأصغر إلى الأكبر ←</div><div class="ogrid">${sl.map((x,i)=>`<button class="opt${mine===i?" mine":""}${mine!=null&&mine!==i?" dim":""}${i===0&&sl.length%2===0?" wide":""}" ${mine!=null?"disabled":`${attr}="${i}"`}><span class="ot">${esc(x.t)}</span><span class="tag" dir="ltr">×${x.od}</span></button>`).join("")}</div>`;
@@ -1658,7 +1715,7 @@ function buildOptions(){
 function pick(i){
   stopTimer();
   S.picks[S.turn]=i;
-  if(S.mode==="bet"){ S.bets[S.turn]={s:i,x:Math.min(S.stake||0,S.scores[S.turn]||0)}; S.stake=0; }
+  if(S.mode==="bet"){ S.bets[S.turn]={s:i,x:capStake(i,Math.min(S.stake||0,S.scores[S.turn]||0))}; S.stake=0; }
   if(S.turn<S.players.length-1){S.turn++;S.screen="handoff";render();return;}
   score(); S.screen="reveal"; render();
 }
@@ -1692,6 +1749,8 @@ app.addEventListener("click",e=>{
   if(t.dataset.bankRemain!=null){bankRemain();return;}
   if(t.dataset.go==="stats"){stopTimer();S.screen="stats";loadGameStats();return;}
   if(t.dataset.go){stopTimer();if(t.dataset.go==="setup"&&S.mode==="mafia")S.mode="tmw";S.screen=t.dataset.go;if(t.dataset.go==="online"&&!O.R){O.screen="menu";O.err="";}render();return;}
+  if(t.dataset.help){ if(S.screen!=="help") S.helpBack=S.screen; S.helpK=t.dataset.help; S.screen="help"; render(); try{window.scrollTo(0,0);}catch(e){} return; }
+  if(t.dataset.helpback!=null){ S.screen=S.helpBack||"home"; render(); return; }
   if(S.screen==="online"&&onlineClick(t)) return;
   if(t.dataset.endlocal!=null){
     if(!S.endArm){S.endArm=true;render();setTimeout(()=>{if(S.endArm){S.endArm=false;render();}},5000);return;}
@@ -2068,7 +2127,7 @@ function hostStep(){
   }else if(H.phase==="pick"){
     H.players.forEach((pl,i)=>{
       const pr=pres(pl.p),k=pr&&pr.k;
-      if(H.mode==="bet"){ if(k&&k.r===H.round&&Number.isInteger(k.i)&&k.i>=0&&k.i<H.opts.length){H.picks[i]=k.i;(H.bets=H.bets||{})[i]={s:k.i,x:Math.max(0,Math.min(+k.x||0,H.scores[i]||0))};} }
+      if(H.mode==="bet"){ if(k&&k.r===H.round&&Number.isInteger(k.i)&&k.i>=0&&k.i<H.opts.length){H.picks[i]=k.i;(H.bets=H.bets||{})[i]={s:k.i,x:capStake(k.i,Math.max(0,Math.min(+k.x||0,H.scores[i]||0)))};} }
       else if(k&&k.r===H.round&&Number.isInteger(k.i)&&k.i>=0&&k.i<H.opts.length&&!(Array.isArray(H.opts[k.i].o)&&H.opts[k.i].o.includes(i))) H.picks[i]=k.i;
     });
     if(H.players.every((_,i)=>H.picks[i]!=null)||(H.deadline&&now>H.deadline)) hostToReveal();
@@ -2405,10 +2464,10 @@ const settingsHTML=()=>{
   const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
   const rd=roundsStepper();
   const tm=[[30,"30 ثانية"],[45,"45 ثانية"],[60,"دقيقة"],[0,"بدون وقت"]].map(([n,l])=>`<button class="chip" data-timer="${n}" aria-pressed="${S.timer===n}">${l}</button>`).join("");
-  if(S.mode==="mafia") return `${modeChipsHTML(true)}<ol class="rules">${RULES.mafia}</ol>
+  if(S.mode==="mafia") return `${modeChipsHTML(true)}<ol class="rules">${RULES.mafia}</ol>${helpBtn()}
     <div class="eyebrow">مدة النقاش في النهار</div><div class="stepper"><button class="chip" data-mdur="-1" ${S.mdur<=3?"disabled":""}>−</button><b>${S.mdur} دقائق</b><button class="chip" data-mdur="1" ${S.mdur>=15?"disabled":""}>+</button></div>
     <div class="muted">يمكن للمضيف إضافة دقائق أثناء النقاش حتى 15 دقيقة. تحتاج ${MIN_MAFIA} لاعبين على الأقل، وكل لاعب على جواله.</div>`;
-  return `${modeChipsHTML(true)}<ol class="rules">${RULES[S.mode||"tmw"]}</ol>${catChipsHTML()}
+  return `${modeChipsHTML(true)}<ol class="rules">${RULES[S.mode||"tmw"]}</ol>${helpBtn()}${catChipsHTML()}
     <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
     <div class="eyebrow">الوقت لكل لاعب</div><div class="chips">${tm}</div>`;
 };
