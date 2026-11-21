@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#141a2e">
-<title>تمويه</title>
+<title>رشة ألعاب عالخفيف</title>
+<meta name="description" content="العب مع أحبابك وأصحابك عالرايق: تمويه، كم تراهن؟، اسم جماد بلد، الضايع، والمافيا.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Readex+Pro:wght@400;500;700&display=swap">
 <style>
@@ -35,7 +36,7 @@ body{
 }
 #app{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-height:100%}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.logo{font-family:var(--display);font-size:2.4rem;line-height:1;color:var(--saffron);
+.logo{font-family:var(--display);font-size:clamp(1.15rem,5.4vw,1.9rem);white-space:nowrap;line-height:1;color:var(--saffron);
   text-shadow:0 3px 0 var(--saffron-deep), 0 6px 0 rgba(0,0,0,.35);letter-spacing:0}
 .tag{font-size:.8rem;color:var(--muted)}
 .round-pill{font-size:.8rem;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--paper);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -238,7 +239,7 @@ button.hrow{cursor:pointer}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 58;
+const APP_VERSION = 59;
 const MAX_PLAYERS = 12;
 const BANK = [
   // لغة وأدب
@@ -1195,7 +1196,7 @@ function header(){
   let x="";
   if(["choose","handoff","write","pick","reveal","hspin","hhand","hwrite","hjudge","hscore","bhand","bshow","bask","bvhand","bvote","bres","bguess","bscore","btq1","bacc1","bacc2","bnotout"].includes(S.screen)) x=`<button class="xbtn${S.endArm?" armed":""}" data-endlocal aria-label="إنهاء اللعبة">${S.endArm?"متأكد؟ اضغط ثانية":"✕ إنهاء"}</button>`;
   else if(S.screen==="online"&&O.screen==="game"&&O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore","brole","bask","bvote","bguess","bscore"].includes(O.g.ph)) x=`<button class="xbtn${O.leaveArm?" armed":""}" data-o="leave" aria-label="الخروج من اللعبة">${O.leaveArm?(O.host?"ستنتهي عند الجميع، اضغط ثانية":"متأكد؟ اضغط ثانية"):"✕ خروج"}</button>`;
-  return `<div class="brand"><div><div class="logo">تمويه</div><div class="tag">اكتب كذبة مقنعة، واكشف الحقيقة</div></div><div class="hdr-r">${r}${x}</div></div>`;
+  return `<div class="brand"><div><div class="logo">رشة ألعاب عالخفيف</div><div class="tag">العب مع أحبابك وأصحابك عالرايق</div></div><div class="hdr-r">${r}${x}</div></div>`;
 }
 
 let LAST_HTML=null;
@@ -3332,10 +3333,11 @@ function gameViewInner(){
 }
 // رابط دعوة يفتح الغرفة نفسها مباشرة
 function inviteURL(){return location.origin+location.pathname+"?room="+O.code.toUpperCase();}
-function inviteText(){return `تعال العب معي «تمويه» 🎭 اضغط الرابط وادخل الغرفة ${O.code.toUpperCase()}:\n${inviteURL()}`;}
+const inviteGame=()=>MODE_NAME[(O.g&&O.g.md)||S.mode||"tmw"]||"";
+function inviteText(){return `تعال العب معي ${inviteGame()} على «رشة ألعاب عالخفيف» 🎉 اضغط الرابط وادخل الغرفة ${O.code.toUpperCase()}:\n${inviteURL()}`;}
 async function shareInvite(){
   const text=inviteText(), url=inviteURL();
-  try{ if(navigator.share){ await navigator.share({title:"تمويه",text:`تعال العب معي «تمويه» 🎭 الغرفة ${O.code.toUpperCase()}`,url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  try{ if(navigator.share){ await navigator.share({title:"رشة ألعاب عالخفيف",text:`تعال العب معي ${inviteGame()} على «رشة ألعاب عالخفيف» 🎉 الغرفة ${O.code.toUpperCase()}`,url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
   try{ await navigator.clipboard.writeText(text); O.inviteMsg="نُسخ الرابط ✓ الصقه لأصحابك"; }
   catch(e){ O.inviteMsg="انسخ الرابط الظاهر تحت الزر"; }
   render(); setTimeout(()=>{O.inviteMsg="";render();},3000);
