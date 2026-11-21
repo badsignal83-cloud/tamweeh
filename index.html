@@ -221,6 +221,13 @@ button.hrow{cursor:pointer}
 .bq .arr{color:var(--line)}.bq.now{color:var(--paper);border:1px solid var(--saffron)}.bq.done{opacity:.45;text-decoration:line-through}
 .mp.bout{border:2px solid var(--saffron)}
 .opt.truth{border-color:var(--mint);background:rgba(95,211,176,.15)}
+
+.gpick{display:grid;grid-template-columns:1fr;gap:10px}
+.gtile{font:inherit;text-align:right;display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:18px;border:2px solid var(--line);background:var(--ink);color:var(--paper);cursor:pointer}
+.gtile b{font-family:var(--display);font-size:1.25rem;color:var(--saffron)}
+.gtile small{color:var(--muted);font-size:.85rem;line-height:1.5}
+@media(hover:hover){.gtile:hover{border-color:var(--saffron)}}
+.gtile:active{transform:scale(.98)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -231,7 +238,7 @@ button.hrow{cursor:pointer}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 57;
+const APP_VERSION = 58;
 const MAX_PLAYERS = 12;
 const BANK = [
   // لغة وأدب
@@ -988,6 +995,7 @@ function catChipsHTML(){
 }
 const LET = ["أ","ب","ج","د","هـ","و","ز","ح","ط","ي","ك","ل","م"];
 function modeChipsHTML(online){
+  return ""; // اختيار اللعبة صار في الصفحة الأولى
   return `<div class="eyebrow">نوع اللعبة</div><div class="chips">${Object.entries(MODE_NAME).filter(([k])=>online||k!=="mafia").map(([k,n])=>`<button class="chip" data-mode="${k}" aria-pressed="${(S.mode||"tmw")===k}">${n}</button>`).join("")}</div>`;
 }
 const RULES={
@@ -1304,6 +1312,7 @@ const HELP={
     <h3>الأموات</h3><p>من يموت يصبح متفرجاً: يرى كل الأدوار وما يحدث في الليل، لكن لا يتكلم ولا يصوّت.</p>`}
 };
 const helpBtn=()=>`<button class="btn ghost small" data-help="${S.mode||"tmw"}">❓ كيف ألعب؟</button>`;
+const GAME_DESC={tmw:"سؤال غريب، كل واحد يكتب كذبة مقنعة، والكل يحاول يكشف الحقيقة.",bet:"سؤال جوابه رقم، كل واحد يقدّر، ثم تراهنون على الأقرب.",hrf:"حرف عشوائي، واكتب اسماً وجماداً ونباتاً وحيواناً وبلداً تبدأ به قبل الكل.",brr:"الكل بعرف الكلمة إلا واحد، اكشفوه قبل ما يعرفها.",mafia:"أدوار سرية ونقاش وتصويت: اكشفوا المافيا قبل أن تقضي عليكم. (5 لاعبين أو أكثر، كل واحد على جواله)"};
 const VIEWS={
   help(){
     const k=S.helpK||"tmw";
@@ -1312,20 +1321,24 @@ const VIEWS={
       <button class="btn ghost" data-helpback>رجوع</button>`;
   },
   home(){
-    return `<section class="card">
-      <h1>كيف تحبون تلعبون؟</h1>
-      <div class="muted"><b>🎭 تمويه:</b> سؤال غريب، كل واحد يكتب كذبة مقنعة، والكل يحاول يكشف الحقيقة.</div>
-      <div class="muted"><b>🎲 كم تراهن؟</b> سؤال جوابه رقم، كل واحد يقدّر، ثم تراهنون على الأقرب.</div>
-      <div class="muted"><b>🤫 الضايع:</b> الكل بعرف الكلمة إلا واحد، اكشفوه قبل ما يعرفها.</div>
-      <div class="muted"><b>🔤 اسم جماد بلد:</b> حرف عشوائي، واكتب اسماً وجماداً ونباتاً وحيواناً وبلداً تبدأ به قبل الكل.</div>
-      <div class="muted" style="font-size:.8rem">تختار نوع اللعبة في الخطوة التالية.</div>
-    </section>
-    <button class="btn" data-go="online">العب من جوالك</button>
-    <div class="muted" style="text-align:center">كل لاعب على جواله، بنفس الرابط ورمز الغرفة</div>
-    <button class="btn pom" data-go="setup">جوال واحد للجميع</button>
-    <div class="muted" style="text-align:center">جهاز واحد يتنقل بين اللاعبين</div>
+    return `<section class="card"><h1>شو بدكم تلعبوا؟</h1>
+      <div class="gpick">${Object.entries(MODE_NAME).map(([k,n])=>`<button class="gtile" data-pickmode="${k}"><b>${n}</b><small>${GAME_DESC[k]}</small></button>`).join("")}</div></section>
+    <button class="btn pom" data-gojoin>🔑 انضم لغرفة برمز</button>
+    <div class="muted" style="text-align:center">إذا صاحبك فاتح غرفة، ادخل برمزها مباشرة</div>
     <button class="btn ghost" data-help="tmw">❓ كيف ألعب؟</button>
     <button class="btn ghost" data-go="stats">📊 الإحصائيات</button>`;
+  },
+  // الخطوة الثانية: إعدادات اللعبة المختارة، ثم طريقة اللعب (غرفة أو جوال واحد)
+  game(){
+    const m=S.mode||"tmw";
+    return `<section class="card"><div class="eyebrow">اللعبة</div><h1>${MODE_NAME[m]}</h1>${settingsHTML()}</section>
+    <div class="err" role="alert">${esc(S.err)}</div>
+    <div class="eyebrow" style="text-align:center">كيف بدكم تلعبوا؟</div>
+    <button class="btn" data-goonline>🌐 كل لاعب من جواله</button>
+    <div class="muted" style="text-align:center">تنشئ غرفة، وأصحابك يدخلون برمزها أو برابط الدعوة</div>
+    ${m==="mafia"?`<div class="muted" style="text-align:center">المافيا تُلعب فقط وكل لاعب على جواله، لأن الأدوار سرية.</div>`:`<button class="btn pom" data-go="setup">📱 جوال واحد للجميع</button>
+    <div class="muted" style="text-align:center">جهاز واحد يتنقل بين اللاعبين</div>`}
+    <button class="btn ghost" data-go="home">رجوع</button>`;
   },
   online(){ return onlineView(); },
   stats(){ return statsView(); },
@@ -1337,24 +1350,14 @@ const VIEWS={
     const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
     const rd=roundsStepper();
     const tm=[[30,"30 ثانية"],[45,"45 ثانية"],[60,"دقيقة"],[0,"بدون وقت"]].map(([n,l])=>`<button class="chip" data-timer="${n}" aria-pressed="${S.timer===n}">${l}</button>`).join("");
-    return `<section class="card">
-      <h1>لعبة جديدة</h1>
-      ${modeChipsHTML(false)}
-      <ol class="rules">${RULES[["bet","hrf","brr"].includes(S.mode)?S.mode:"tmw"]}</ol>${helpBtn()}
-    </section>
-    <section class="card">
+    return `<section class="card"><div class="eyebrow">جوال واحد للجميع</div><h1>${MODE_NAME[S.mode||"tmw"]}</h1>
       <div class="eyebrow">اللاعبون (${S.players.length} من ${MAX_PLAYERS})</div>
       <div class="players">${pl}</div>
       ${S.players.length<MAX_PLAYERS?`<button class="btn ghost" id="add">+ أضف لاعباً</button>`:""}
     </section>
-    <section class="card">
-      ${S.mode==="brr"?`<div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${bCatChips()}<div class="muted">كل لاعب يشوف الكلمة بدوره ثم يسلّم الموبايل، والتصويت سري بالدور.</div>`:S.mode==="hrf"?`<div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${hTimeChips()}<div class="muted">كل لاعب يكتب بدوره ثم يسلّم الجوال، وفي آخر الجولة تراجعون الإجابات معاً.</div>`:`${catChipsHTML()}
-      <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
-      <div class="eyebrow">الوقت لكل لاعب</div><div class="chips">${tm}</div>`}
-    </section>
     <div class="err" role="alert">${esc(S.err)}</div>
     <button class="btn" id="start">ابدأ اللعب</button>
-    <button class="btn ghost" data-go="home">رجوع</button>`;
+    <button class="btn ghost" data-go="game">↩ تعديل الإعدادات</button>`;
   },
   choose(){
     const who=S.players[(S.round-1)%S.players.length];
@@ -1862,6 +1865,9 @@ app.addEventListener("click",e=>{
   if(t.dataset.go){stopTimer();if(t.dataset.go==="setup"&&S.mode==="mafia")S.mode="tmw";S.screen=t.dataset.go;if(t.dataset.go==="online"&&!O.R){O.screen="menu";O.err="";}render();return;}
   if(t.dataset.help){ if(S.screen!=="help") S.helpBack=S.screen; S.helpK=t.dataset.help; S.screen="help"; render(); try{window.scrollTo(0,0);}catch(e){} return; }
   if(t.dataset.helpback!=null){ S.screen=S.helpBack||"home"; render(); return; }
+  if(t.dataset.pickmode){ setMode(t.dataset.pickmode); S.err=""; S.screen="game"; render(); try{window.scrollTo(0,0);}catch(e){} return; }
+  if(t.dataset.goonline!=null){ if(S.mode!=="mafia"&&S.mode!=="hrf"&&S.mode!=="brr"&&!S.cats.filter(k=>leftIn(k)).length){S.err="اختر فئة واحدة على الأقل فيها أسئلة.";render();return;} S.err=""; stopTimer(); S.screen="online"; O.screen="create"; O.err=""; render(); try{window.scrollTo(0,0);}catch(e){} return; }
+  if(t.dataset.gojoin!=null){ stopTimer(); S.screen="online"; O.screen="join"; O.err=""; render(); return; }
   if(t.dataset.htime){S.htime=+t.dataset.htime;render();return;}
   if(t.dataset.brc){const k=t.dataset.brc,cur=S.brc&&S.brc.length?S.brc:Object.keys(BCATS);S.brc=cur.includes(k)?cur.filter(x=>x!==k):cur.concat([k]);if(!S.brc.length)S.brc=[k];render();return;}
   if(S.screen==="online"&&onlineClick(t)) return;
@@ -2115,7 +2121,7 @@ async function enterRoom(code,host,resume){
   const nm=O.name.trim();
   if(!nm){O.err="اكتب اسمك أولاً.";return render();}
   if(!host&&!/^[a-z0-9]{5}$/.test(code)){O.err="الرمز من 5 أحرف وأرقام، كما يظهر عند المضيف.";return render();}
-  if(host&&!resume){S.cats=S.cats.filter(k=>leftIn(k)); if(!S.cats.length){O.err="انتهت أسئلة الفئات المختارة. اختر فئات أخرى، أو ابدأ كل الأسئلة من جديد.";return render();}}
+  if(host&&!resume&&(S.mode==="tmw"||S.mode==="bet"||!S.mode)){S.cats=S.cats.filter(k=>leftIn(k)); if(!S.cats.length){O.err="انتهت أسئلة الفئات المختارة. اختر فئات أخرى، أو ابدأ كل الأسئلة من جديد.";return render();}}
   O.err="";O.busy=true;render();
   const room=await roomApi();
   if(!room){O.busy=false;O.err="الخادم غير مضبوط بعد: أضف إعدادات Firebase في الملف.";return render();}
@@ -2158,7 +2164,7 @@ function leaveRoom(){
   clearInterval(hostIv);clearInterval(clientIv);hostIv=clientIv=null;
   if(O.R) O.R.leave().catch(()=>{});
   Object.assign(O,{gs:"",screen:"menu",R:null,g:null,peers:[],host:false,code:"",key:"",deadline:0,err:"",priv:null,acts:null,mySent:null,snArm:false});
-  S.screen="online";render();
+  S.screen="home";render();
 }
 
 function onRoom(){
@@ -3172,9 +3178,9 @@ const settingsHTML=()=>{
     <div class="eyebrow">مدة النقاش في النهار</div><div class="stepper"><button class="chip" data-mdur="-1" ${S.mdur<=3?"disabled":""}>−</button><b>${S.mdur} دقائق</b><button class="chip" data-mdur="1" ${S.mdur>=15?"disabled":""}>+</button></div>
     <div class="muted">يمكن للمضيف إضافة دقائق أثناء النقاش حتى 15 دقيقة. تحتاج ${MIN_MAFIA} لاعبين على الأقل، وكل لاعب على جواله.</div>`;
   if(S.mode==="brr") return `${modeChipsHTML(true)}<ol class="rules">${RULES.brr}</ol>${helpBtn()}
-    <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${bCatChips()}<div class="muted">تحتاج ${BMIN} لاعبين على الأقل، وكل لاعب يشوف الكلمة على موبايله.</div>`;
+    <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${bCatChips()}<div class="muted">تحتاج ${BMIN} لاعبين على الأقل.</div>`;
   if(S.mode==="hrf") return `${modeChipsHTML(true)}<ol class="rules">${RULES.hrf}</ol>${helpBtn()}
-    <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${hTimeChips()}<div class="muted">كل لاعب على جواله، والمضيف هو الحكم: يقبل أو يرفض أي إجابة قبل حساب النقاط.</div>`;
+    <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${hTimeChips()}<div class="muted">في آخر كل جولة تُراجَع الإجابات: أونلاين يحكم المضيف، وعلى جوال واحد تحكمون معاً.</div>`;
   return `${modeChipsHTML(true)}<ol class="rules">${RULES[S.mode||"tmw"]}</ol>${helpBtn()}${catChipsHTML()}
     <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
     <div class="eyebrow">الوقت لكل لاعب</div><div class="chips">${tm}</div>`;
@@ -3191,16 +3197,15 @@ function onlineView(){
     <button class="btn" data-o="create">أنشئ غرفة</button>
     <button class="btn pom" data-o="join">انضم برمز</button>
     <button class="btn ghost" data-o="home">رجوع</button>`;
-  if(O.screen==="create") return `<section class="card">${nameInput()}</section>
-    <section class="card">${settingsHTML()}</section>${errHTML()}
+  if(O.screen==="create") return `<section class="card"><div class="eyebrow">غرفة جديدة</div><h1>${MODE_NAME[S.mode||"tmw"]}</h1>${nameInput()}</section>${errHTML()}
     <button class="btn" data-o="make" ${O.busy?"disabled":""}>${O.busy?"جارٍ إنشاء الغرفة…":"أنشئ الغرفة"}</button>
-    <button class="btn ghost" data-o="menu">رجوع</button>`;
+    <button class="btn ghost" data-go="game">↩ تعديل الإعدادات</button>`;
   if(O.screen==="join") return `<section class="card">${nameInput()}
       <label for="ocode">رمز الغرفة</label>
       <input type="text" id="ocode" data-keep maxlength="5" autocomplete="off" autocapitalize="characters" dir="ltr" value="${esc(O.codeIn)}" placeholder="ABCDE" style="text-align:center;letter-spacing:.3em;font-size:1.4rem">
     </section>${errHTML()}
     <button class="btn" data-o="enter" ${O.busy?"disabled":""}>${O.busy?"جارٍ الدخول…":"ادخل الغرفة"}</button>
-    <button class="btn ghost" data-o="menu">رجوع</button>`;
+    <button class="btn ghost" data-go="home">رجوع</button>`;
   return gameView();
 }
 function codeBox(){return `<div class="code-box" dir="ltr">${esc(O.code.toUpperCase())}</div>`;}
