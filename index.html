@@ -212,6 +212,15 @@ button.hrow{cursor:pointer}
 .hpts{color:var(--mint);font-variant-numeric:tabular-nums}.hpts.z{color:var(--muted)}
 .htg{font-weight:700;width:22px;text-align:center}
 .hrow.ok .htg{color:var(--mint)}.hrow.no .htg{color:var(--pom)}
+
+.bsecret{font-family:var(--display);font-size:2.6rem;color:var(--saffron);line-height:1.2;padding:10px 0}
+.bsecret.out{font-size:4rem}.bsecret.out.small{font-size:1.3rem;padding:0}
+.bnow{font-size:1.2rem;text-align:center;padding:10px;border-radius:14px;background:var(--ink);border:2px solid var(--saffron)}
+.border{display:flex;flex-direction:column;gap:6px}
+.bq{display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--ink);color:var(--muted);font-size:.9rem}
+.bq .arr{color:var(--line)}.bq.now{color:var(--paper);border:1px solid var(--saffron)}.bq.done{opacity:.45;text-decoration:line-through}
+.mp.bout{border:2px solid var(--saffron)}
+.opt.truth{border-color:var(--mint);background:rgba(95,211,176,.15)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -222,7 +231,7 @@ button.hrow{cursor:pointer}
 <div id="app" dir="rtl" lang="ar"></div>
 
 <script>
-const APP_VERSION = 51;
+const APP_VERSION = 55;
 const MAX_PLAYERS = 12;
 const BANK = [
   // لغة وأدب
@@ -870,7 +879,7 @@ Object.assign(CATS,{b_hist:"تواريخ وسنوات",b_geo:"جغرافيا ب�
 const BET_MAP={hist:"b_hist",islam:"b_hist",prophets:"b_hist",geo:"b_geo",gulf:"b_geo",capitals:"b_geo",sci:"b_sci",chem:"b_sci",space:"b_sci",bio:"b_sci",body:"b_sci",animals:"b_sci",physics:"b_sci",geology:"b_sci",sport:"b_sport",tech:"b_misc",quran:"b_misc",oddfact:"b_misc"};
 const NUM_ANS=/^-?[0-9]+(\.[0-9]+)?$/;
 const inCat=(q,k)=>q.c===k||(BET_MAP[q.c]===k&&NUM_ANS.test(q.a));
-const MODE_NAME={tmw:"🎭 تمويه",bet:"🎲 كم تراهن؟",hrf:"🔤 اسم جماد بلد",mafia:"🕵️ المافيا"};
+const MODE_NAME={tmw:"🎭 تمويه",bet:"🎲 كم تراهن؟",hrf:"🔤 اسم جماد بلد",brr:"🤫 الضايع",mafia:"🕵️ المافيا"};
 Object.keys(CATS).forEach(k=>BUILTIN_CAT[k]=1); BET_CATS.forEach(k=>BUILTIN_CAT[k]=1);
 // المرادفات: إجابات بنفس معنى الحقيقة تماماً تُرفض كأنها الحقيقة
 const SYN_Q={"lang|صوت يُسمع ولا يُرى صاحبه": ["صوت بلا صاحب", "صوت مجهول", "صوت خفي", "المنادي الخفي", "صوت غيبي", "صوت من الغيب"], "lang|القافلة من المسافرين": ["القافلة", "قافلة", "جماعة مسافرين", "الركب", "الرفقة", "قافلة مسافرين"], "lang|سعفة النخل بعد نزع خوصها": ["سعفة النخل", "جريد النخل", "غصن النخل", "السعف", "الجريد", "سعف النخيل"], "lang|بياض الأسنان وبريقها": ["بياض الأسنان", "لمعان الأسنان", "بريق الأسنان", "جمال الأسنان", "صفاء الأسنان", "الأسنان البيضاء"], "lang|طعام المسافر": ["زاد المسافر", "طعام السفر", "أكل المسافر", "زاد السفر", "الزاد"], "lang|الخمر": ["النبيذ", "المسكر", "الشراب المسكر", "الخمرة"], "lang|الأحذية": ["النعال", "الحذاء", "النعل", "الأخفاف", "الجزم", "الكنادر"], "lang|الأسد": ["الليث", "الضرغام", "السبع", "الهزبر", "أسد"], "lang|امرؤ القيس": ["امرئ القيس", "امرأ القيس", "امرؤ القيس الكندي", "الملك الضليل"], "lang|الظلام": ["الظلمة", "العتمة", "الليل المظلم", "السواد", "العتمه"], "lang|Zero": ["زيرو", "صفر"], "lang|السيف": ["الصارم", "المهند", "البتار", "سيف", "الحسام"], "lang|الشجر الكثيف الملتف": ["الشجر الكثيف", "الغابة", "الأشجار الملتفة", "الغيضة", "الأجمة", "الشجر الملتف", "الأشجار الكثيفة"], "lang|الحرب": ["القتال", "المعركة", "ساحة القتال", "المعارك", "الحروب"], "lang|ظهر الفرس": ["ظهر الحصان", "موضع السرج", "مكان السرج", "ظهر الخيل"], "hist|الفيلة": ["الفيل", "الأفيال", "فيلة"], "hist|ورق البردي": ["البردي", "البابيروس", "ورق البابيروس"], "hist|طريق الحرير": ["درب الحرير"], "hist|بنو الأحمر": ["بني الأحمر", "النصريون", "بنو نصر", "بني نصر", "الدولة النصرية"], "hist|الإنكا": ["حضارة الإنكا", "inca"], "geo|خندق ماريانا": ["ماريانا", "أخدود ماريانا", "تشالنجر ديب", "هوة تشالنجر"], "geo|البحر الميت": ["بحر لوط", "البحيرة الميتة"], "geo|مضيق جبل طارق": ["جبل طارق"], "geo|الإكوادور": ["ecuador"], "geo|جبل إيفرست": ["إيفرست", "قمة إيفرست", "everest"], "geo|غرينلاند": ["جرينلاند", "الأرض الخضراء", "greenland"], "geo|الصحراء الكبرى": ["الصحراء الأفريقية الكبرى", "صحراء أفريقيا", "sahara"], "geo|الفاتيكان": ["دولة الفاتيكان", "مدينة الفاتيكان"], "sci|الجلد": ["البشرة"], "sci|ثاني أكسيد الكربون": ["co2", "غاز الكربون", "الكربون"], "sci|الألماس": ["الماس", "diamond"], "sci|الخلية": ["خلية", "cell"], "sci|النيتروجين": ["الآزوت", "nitrogen", "n2"], "sci|التبخر": ["التبخير", "البخار", "التبخير"], "sci|O سالب": ["o-", "او سالب", "o negative"], "gulf|الحِجر": ["مدائن صالح"], "gulf|قصر المصمك": ["المصمك", "حصن المصمك"], "gulf|واحة الأحساء": ["الأحساء", "هجر"], "gulf|الريال العُماني": ["الريال"], "gulf|جسر الملك فهد": ["جسر البحرين", "جسر فهد"], "tech|ملك دنماركي قديم": ["ملك الدنمارك", "ملك دنماركي", "هارالد بلوتوث", "ملك الفايكنغ", "ملك"], "tech|صناعة الورق": ["الورق", "ورق", "مصنع ورق", "مطحنة ورق"], "tech|الجيل": ["generation", "جيل"], "tech|لا شيء، مجرد اسم تجاري": ["لا شيء", "لا يعني شيئا", "اسم تجاري", "بلا معنى", "ليس له معنى", "مجرد اسم", "علامة تجارية"], "tech|وحدة هوية المشترك": ["هوية المشترك", "subscriber identity module", "تعريف المشترك", "وحدة تعريف المشترك"], "tech|وحدة المعالجة المركزية": ["المعالج", "central processing unit", "المعالج المركزي"], "tech|الناقل التسلسلي العالمي": ["universal serial bus", "الناقل العام", "الناقل التسلسلي"], "tech|الشبكة العنكبوتية العالمية": ["world wide web", "الشبكة العالمية", "الويب العالمي", "الشبكة العنكبوتية"], "islam|مسجد قباء": ["قباء"], "islam|ثلاثمئة وبضعة عشر": ["313", "314", "317", "319", "300", "ثلاثمئة", "ثلاثمائة"], "islam|السنة الثانية": ["2 هـ", "الثانية", "سنة 2", "2"], "islam|الخلافة العثمانية": ["العثمانيون", "الدولة العثمانية", "العثمانية"], "islam|خديجة بنت خويلد": ["خديجة", "أم المؤمنين خديجة"], "sport|الريشة الطائرة": ["البادمنتون", "badminton"], "sport|السومو": ["sumo"], "sport|الغولف": ["الجولف", "golf"], "food|السمك المخمّر": ["صلصة السمك", "السمك", "سمك مخمر"], "food|الحمص أو الفول": ["الحمص", "الفول", "حمص", "فول"], "food|الأوركيد": ["السحلبية", "زهرة الأوركيد"], "food|الكاكاو": ["حبوب الكاكاو", "cocoa"], "food|نوع من التوت": ["توت", "ثمرة توتية", "التوت"], "food|فيتامين د": ["فيتامين d", "vitamin d", "د"], "food|المغرب العربي": ["المغرب", "شمال أفريقيا", "الجزائر", "تونس", "ليبيا", "المغرب الكبير"], "food|العسل": ["عسل النحل"], "animals|الفهد": ["الشيتا", "cheetah"], "animals|في السنام": ["السنام", "الحدبة"], "animals|الطائر الطنّان": ["الطنان", "الطائر الذبابي", "هَمِنغ بيرد"], "animals|الحوت الأزرق": ["الحوت"], "animals|الشبل": ["شبل"], "animals|الدلفين": ["الدولفين"], "animals|الخفاش": ["الوطواط", "الخفافيش"], "animals|الشاهين": ["الصقر الشاهين", "الصقر الجوال", "الشاهين الجوال", "الصقر"], "animals|المهر": ["المهرة", "الفلو"], "oddfact|الكلبة لايكا": ["لايكا", "كلبة", "الكلب"], "oddfact|سور الصين العظيم": ["سور الصين"], "oddfact|الحبار العملاق": ["الحبار", "الحبار الهائل"], "oddfact|يزداد قليلاً": ["يطول", "يزيد طوله", "يصبح أطول", "يزداد طولا", "يطول قليلا", "يزيد"], "oddfact|أراكنوفوبيا": ["رهاب العناكب", "فوبيا العناكب", "الخوف من العناكب"], "film|دراجة هوائية": ["دراجة", "سيكل", "بسكليت", "عجلة", "بسكليته"], "currency|الجنيه الإسترليني": ["الجنيه", "الباوند", "الإسترليني", "pound"], "currency|اليوان": ["الرنمينبي", "yuan"], "currency|الفرنك السويسري": ["الفرنك", "فرنك"], "currency|الريال البرازيلي": ["الريال"], "currency|اليورو": ["euro"], "flags|الأخضر": ["أخضر", "اللون الأخضر"], "prophets|قوم عاد": ["عاد"], "prophets|أهل مدين": ["مدين", "أصحاب الأيكة"], "prophets|309 سنين": ["ثلاثمئة وتسع سنين", "300 وتسع", "309"], "quran|آية الدين": ["آية المداينة"], "quran|بالنيات": ["بالنية", "النية", "النيات"], "quran|جبريل عليه السلام": ["جبرائيل", "الروح الأمين", "جبريل"], "invent|علم البصريات": ["البصريات", "علم الضوء", "optics"], "invent|الأخوان رايت": ["رايت", "الإخوة رايت"], "space|كوكب قزم": ["قزم"], "space|درب التبانة": ["درب اللبانة", "الطريق اللبني", "milky way"], "space|الدب الأصغر": ["بنات نعش الصغرى"], "body|الصفراء": ["العصارة الصفراوية", "عصارة المرارة", "الصفرا"], "body|الكلية": ["الكليتان", "الكلى"], "body|خلايا الدم الحمراء": ["كريات الدم الحمراء", "الكريات الحمراء", "الهيموغلوبين", "الهيموجلوبين"], "body|عظمة الفخذ": ["الفخذ", "عظم الفخذ", "الفيمور"], "body|عظمة الركاب في الأذن": ["الركاب", "عظمة الركاب"], "body|الأدرينالين": ["الإبينفرين"], "body|الإنسولين": ["الأنسولين"], "body|الغدة النخامية": ["النخامية"], "body|الأميليز": ["الأميلاز", "التيالين"], "bio|DNA": ["الحمض النووي", "دي ان ايه", "الدنا", "الحمض النووي الريبي منقوص الأكسجين"], "bio|الميتوكوندريا": ["المتقدرات"], "bio|الكلوروفيل": ["اليخضور"], "bio|الانقسام المتساوي": ["الانقسام الميتوزي", "الانقسام غير المباشر", "ميتوز"], "bio|اللولب المزدوج": ["الحلزون المزدوج", "اللولب الثنائي", "الحلزون الثنائي"], "bio|البازلاء": ["البسلة", "البزاليا"], "physics|شدة التيار الكهربائي": ["التيار", "التيار الكهربائي", "الأمبير"], "physics|انكسار الضوء في قطرات الماء": ["انكسار الضوء", "تحلل الضوء", "تشتت الضوء"], "physics|الجاذبية": ["الجاذبية الأرضية", "الثقالة"], "physics|طاقة الوضع": ["الطاقة الكامنة", "طاقة الجهد"], "chem|حمض الخليك": ["حمض الأسيتيك", "الخليك"], "chem|حمض الهيدروكلوريك": ["حمض الكلوريدريك", "hcl", "حمض كلور الماء"], "chem|التسامي": ["التصعيد"], "geology|الصهارة": ["الماغما", "magma", "الحمم"], "geology|السيزموغراف": ["مرسمة الزلازل", "السيزمومتر", "جهاز رصد الزلازل", "مقياس الزلازل"], "geology|الغيزر": ["الينبوع الفوار", "النافورة الحارة", "الفوارة"], "geology|بانجيا": ["pangaea"], "geology|حركة الصفائح التكتونية": ["الصفائح التكتونية", "حركة الصفائح", "تحرك القشرة الأرضية"], "kanimals|الرحيق": ["رحيق الأزهار"], "kanimals|في الماء": ["الماء", "البحر", "الأنهار", "البحار"], "kanimals|الكتكوت": ["الصوص", "الفرخ"], "kanimals|فراشة": ["الفراشة"], "kanimals|الخلية": ["خلية النحل", "القفير"], "kworld|يتجمد ويصبح ثلجاً": ["يتجمد", "ثلج", "يصير ثلج", "جليد", "يتحول لثلج", "يصير جليد"], "kworld|الماء والشمس": ["الماء", "الشمس", "الضوء والماء", "الماء والضوء", "الماء والنور"], "kworld|أزرق": ["الأزرق"], "kworld|المطر": ["الغيث"], "kworld|الشرق": ["المشرق"], "kworld|الثلج": ["الجليد"], "kbody|بالأنف": ["الأنف"], "kbody|نغسل أيدينا": ["غسل اليدين", "نغسل اليدين", "غسل الأيدي"], "kbody|الأكسجين": ["الهواء", "oxygen"], "kbody|الجمجمة": ["عظم الرأس"], "kbody|الدماغ": ["المخ", "العقل"], "kbody|الحليب": ["اللبن"], "kbody|النوم": ["الراحة"], "kbody|الجلد": ["البشرة"], "kgen|الطحين": ["الدقيق", "القمح"], "kgen|الجبل الجليدي": ["جبل جليد", "جبل الثلج"], "kgen|الممحاة": ["المساحة", "الأستيكة"], "kislam|الكعبة المشرفة": ["الكعبة", "مكة", "القبلة"], "kislam|عيد الفطر": ["الفطر", "العيد الصغير"], "lang|الجوع": ["المجاعة", "شدة الجوع", "الجوع الشديد"], "lang|شدة الحر واللهب": ["الحرارة", "اللهب", "شدة الحرارة", "حر النار", "الحر"], "lang|البُغام": ["بغام"], "hist|أبو عبد الله الصغير": ["محمد الثاني عشر", "ابو عبدالله", "أبو عبدالله محمد"], "hist|ماي فلاور": ["mayflower"], "gulf|بروتوكول العقير": ["معاهدة العقير", "اتفاقية العقير", "العقير"], "tech|Me at the zoo": ["في حديقة الحيوان", "انا في حديقة الحيوان"], "islam|أبو العباس السفاح": ["السفاح", "أبو العباس", "عبد الله السفاح"], "food|الشمندر السكري": ["الشمندر", "البنجر", "البنجر السكري", "sugar beet"], "food|الكمأة": ["الفقع", "الكمأ", "الترفاس", "truffle"], "animals|تمساح المياه المالحة": ["التمساح", "التمساح البحري", "تمساح"], "animals|نحو 400 سنة": ["400", "أربعمئة سنة", "أربعمائة سنة"], "space|فيلة": ["philae"], "physics|فيرنر هايزنبرغ": ["هايزنبرغ", "heisenberg"], "chem|التنغستن": ["الولفرام", "tungsten", "wolfram"], "chem|البوتاسيوم": ["potassium"], "body|الأوكسيتوسين": ["oxytocin", "هرمون الحب"], "body|الغدة الصنوبرية": ["الصنوبرية", "pineal"], "body|العصب الوركي": ["عرق النسا", "العصب النسائي", "sciatic"], "geology|الكوارتز": ["المرو", "السيليكا", "ثاني أكسيد السيليكون", "quartz"], "capitals|لاباز": ["la paz"], "capitals|عشق آباد": ["عشقباد", "ashgabat"], "capitals|أولان باتور": ["أولانباتار", "ulaanbaatar"], "prophets|950 سنة": ["ألف سنة إلا خمسين", "تسعمئة وخمسون", "950"]};
@@ -985,6 +994,7 @@ const RULES={
   tmw:`<li>في كل جولة يختار لاعب فئة السؤال بالتناوب.</li><li>يظهر سؤال غريب، ويكتب كل لاعب إجابة مزيفة مقنعة دون أن يراها أحد.</li><li>تُخلط الإجابات المزيفة مع الصحيحة، ويختار كل لاعب ما يظنه الحقيقة.</li><li>نقطتان لمن يكشف الحقيقة، ونقطة لك عن كل لاعب يقع في كذبتك.</li>`,
   mafia:`<li>كل لاعب يستلم دوراً سرياً على جواله: مافيا، أو الحامي، أو العمدة، أو القنّاص (مع أكثر من 8 لاعبين)، أو مواطن.</li><li>في الليل تختار المافيا ضحية، والحامي يحمي لاعباً (ولو نفسه).</li><li>في النهار نقاش ثم تصويت علني لإعدام مشتبه. صوت العمدة بصوتين سراً، والتعادل يعيد التصويت بين المتعادلين مرة واحدة.</li><li>يُكشف دور كل من يموت، والأموات يتفرجون ويرون كل الأدوار.</li><li>تفوز المدينة بإخراج كل المافيا، وتفوز المافيا إذا صار عددها مثل عدد البقية.</li>`,
   hrf:`<li>تظهر عجلة الحرف، وكل لاعب يكتب: اسم ولد، اسم بنت، جماد، نبات، حيوان، بلد، و«خانة مفاجأة» تتغير كل جولة، كلها تبدأ بالحرف.</li><li>الإجابة الصحيحة التي لم يكتبها غيرك <b>10</b>، والمكررة <b>5</b> لكل واحد، وإذا كنت الوحيد الذي أجاب في خانة <b>20</b>.</li><li>«✋ ستوب!» يوقف الكتابة عند الجميع بعد 10 ثوانٍ، وصاحبه يأخذ +5 إن كانت كل إجاباته صحيحة.</li><li>جولة ذهبية واحدة في كل لعبة تتضاعف فيها كل النقاط.</li>`,
+  brr:`<li>كل اللاعبين يعرفون «الكلمة» (كلمة سرية من فئة) إلا واحداً لا يعرفها: <b>الضايع</b>.</li><li>تسألون بعضكم بالدور سؤالاً عن الكلمة دون ذكرها، والضايع يحاول يمشي معكم.</li><li>تصويت سري: مين الضايع؟ كل من صوّت عليه <b>+2</b>، وإذا ما انكشف بياخذ <b>+3</b>.</li><li>بعدها يخمّن هو الكلمة من 8 خيارات، وإذا عرفها <b>+3</b>.</li><li><b>🤫 عرفتها!</b> الضايع بيقدر يوقف الأسئلة ويخمّن مبكراً: صح <b>+5</b>، وخطأ ينكشف وكل البقية <b>+2</b>.</li><li><b>☝️ اتهام مبكر:</b> لكل لاعب اتهام واحد في اللعبة يبدأ به التصويت فوراً: صاب <b>+3</b>، أخطأ <b>−2</b>.</li>`,
   bet:`<li>سؤال جوابه رقم، وكل لاعب يكتب تقديره سراً.</li><li>تُرتَّب التقديرات من الأصغر للأكبر، ومعها خانة «أصغر من الكل».</li><li>كل لاعب يراهن على الخانة التي يظنها <b>الأقرب للجواب دون أن تتجاوزه</b>، ويمكنه زيادة رهانه من نقاطه.</li><li>الخانة الرابحة تدفع حسب مضاعفها (من ×2 في الوسط إلى ×4 في الأطراف و«أصغر من الكل»)، والرهان الإضافي يُخسر إن أخطأت، وصاحب التقدير الرابح يأخذ 3 نقاط.</li>`};
 function setMode(m){
   if(m===S.mode) return;
@@ -1167,14 +1177,16 @@ function statsView(){
 function header(){
   let r="";
   if(S.h&&["hspin","hhand","hwrite","hjudge","hscore"].includes(S.screen)) r=`<span class="round-pill">الجولة ${S.h.round} من ${S.h.rounds}${S.h.gold?" ⭐":""}</span>`;
+  else if(S.b&&["bhand","bshow","bask","bvhand","bvote","bres","bguess","bscore","btq1","bacc1","bacc2","bnotout"].includes(S.screen)) r=`<span class="round-pill">الجولة ${S.b.round} من ${S.b.rounds}</span>`;
+  else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.md==="brr"&&O.g.rd>0&&O.g.ph!=="final"&&O.g.ph!=="lobby") r=`<span class="round-pill">الجولة ${O.g.rd} من ${O.g.rs}</span>`;
   else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.md==="hrf"&&O.g.rd>0&&O.g.ph!=="final"&&O.g.ph!=="lobby") r=`<span class="round-pill">الجولة ${O.g.rd} من ${O.g.rs}${O.g.gd?" ⭐":""}</span>`;
   else if(["choose","handoff","write","pick","reveal"].includes(S.screen)) r=`<span class="round-pill ${S.round>S.rounds?"tb":""}">${roundLabel(S.round,S.rounds)}</span>`;
   else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.md==="mafia"&&O.g.day>0&&O.g.ph!=="final") r=`<span class="round-pill">${O.g.ph==="night"?"🌙 الليلة":"☀️ اليوم"} ${O.g.day}</span>`;
   else if(S.screen==="online"&&O.screen==="game"&&O.g&&O.g.md!=="mafia"&&O.g.r>0&&O.g.ph!=="final") r=`<span class="round-pill ${O.g.r>O.g.rs?"tb":""}">${roundLabel(O.g.r,O.g.rs)}</span>`;
   // زر الخروج صغير في زاوية الصفحة، ويحتاج ضغطتين حتى لا يُضغط بالخطأ
   let x="";
-  if(["choose","handoff","write","pick","reveal","hspin","hhand","hwrite","hjudge","hscore"].includes(S.screen)) x=`<button class="xbtn${S.endArm?" armed":""}" data-endlocal aria-label="إنهاء اللعبة">${S.endArm?"متأكد؟ اضغط ثانية":"✕ إنهاء"}</button>`;
-  else if(S.screen==="online"&&O.screen==="game"&&O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore"].includes(O.g.ph)) x=`<button class="xbtn${O.leaveArm?" armed":""}" data-o="leave" aria-label="الخروج من اللعبة">${O.leaveArm?(O.host?"ستنتهي عند الجميع، اضغط ثانية":"متأكد؟ اضغط ثانية"):"✕ خروج"}</button>`;
+  if(["choose","handoff","write","pick","reveal","hspin","hhand","hwrite","hjudge","hscore","bhand","bshow","bask","bvhand","bvote","bres","bguess","bscore","btq1","bacc1","bacc2","bnotout"].includes(S.screen)) x=`<button class="xbtn${S.endArm?" armed":""}" data-endlocal aria-label="إنهاء اللعبة">${S.endArm?"متأكد؟ اضغط ثانية":"✕ إنهاء"}</button>`;
+  else if(S.screen==="online"&&O.screen==="game"&&O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore","brole","bask","bvote","bguess","bscore"].includes(O.g.ph)) x=`<button class="xbtn${O.leaveArm?" armed":""}" data-o="leave" aria-label="الخروج من اللعبة">${O.leaveArm?(O.host?"ستنتهي عند الجميع، اضغط ثانية":"متأكد؟ اضغط ثانية"):"✕ خروج"}</button>`;
   return `<div class="brand"><div><div class="logo">تمويه</div><div class="tag">اكتب كذبة مقنعة، واكشف الحقيقة</div></div><div class="hdr-r">${r}${x}</div></div>`;
 }
 
@@ -1263,6 +1275,17 @@ const HELP={
     <tr><td>أنت الوحيد الذي أجاب إجابة صحيحة في الخانة</td><td><b>20</b></td></tr>
     <tr><td>فارغة أو مرفوضة</td><td><b>0</b></td></tr></table>
     <h3>⭐ الجولة الذهبية</h3><p>جولة واحدة عشوائية في كل لعبة (ليست الأولى) تتضاعف فيها كل النقاط، ومنها مكافأة «ستوب». تُعلَن مع ظهور الحرف.</p>`},
+  brr:{t:"🤫 الضايع",b:`<p>الكل يعرف «الكلمة» إلا واحداً. هو يحاول يندمج ويعرفها، وأنتم تحاولون تكشفونه بدون ما تكشفون الكلمة له. تحتاج 3 لاعبين على الأقل.</p>
+    <h3>الجولة</h3><ol class="rules">
+    <li><b>الكلمة:</b> كل لاعب يشوف شاشته سراً. الكل يقرأ الكلمة (مثلاً «منسف» من فئة أكلات)، وواحد عشوائي يقرأ «أنت الضايع» ويعرف الفئة فقط. يتغيّر الضايع كل جولة.</li>
+    <li><b>الأسئلة:</b> اللعبة ترتّب الأدوار: «فلان يسأل فلان». كل واحد يسأل سؤالاً واحداً بالصوت عن الكلمة بدون ما يذكرها، مثل «بتوكلوه بالعزومات؟». بعد ما يخلص الكل بيقدر المضيف يبدأ دورة أسئلة ثانية أو التصويت.</li>
+    <li><b>التصويت السري:</b> كل لاعب يصوّت على من يظنه الضايع، وبيقدر يغيّر صوته حتى يصوّت الجميع. ينكشف إذا أخذ أكثر الأصوات وحده (التعادل ينجّيه).</li>
+    <li><b>التخمين:</b> يتكشف من كان الضايع، ويختار هو الكلمة من بين 8 خيارات من نفس الفئة.</li></ol>
+    <h3>🤫 عرفتها!</h3><p>أثناء الأسئلة بيقدر الضايع يوقف اللعب ويقول «عرفتها!» ويخمّن الكلمة قبل التصويت. إذا أصاب بياخذ <b>+5</b> وتنتهي الجولة لصالحه. وإذا أخطأ ينكشف، وكل البقية بياخذوا <b>+2</b>. (في الأونلاين الزر يظهر على موبايل الضايع فقط.)</p>
+    <h3>☝️ الاتهام المبكر</h3><p>لكل لاعب اتهام واحد فقط في اللعبة كلها. أثناء الأسئلة يختار من يتهمه، فتتوقف الأسئلة ويبدأ التصويت فوراً. إذا طلع المتهم هو الضايع بياخذ صاحب الاتهام <b>+3</b>، وإذا طلع بريئاً <b>−2</b> (والتصويت يُحسب عادي للجميع).</p>
+    <h3>النقاط</h3><ul class="rules"><li><b>+2</b> لكل لاعب صوّت على الضايع.</li><li><b>+3</b> للضايع إذا ما انكشف.</li><li><b>+3</b> له إذا عرف الكلمة (حتى لو انكشف).</li></ul>
+    <h3>نصائح</h3><ul class="rules"><li>لا توضّح كتير: سؤال واضح جداً يعطي الكلمة للضايع.</li><li>ولا تغمّض كتير: الجواب الغامض يخلّيهم يشكّون فيك أنت.</li></ul>
+    <p>الفئات (22 فئة، في كل وحدة 25 كلمة): أكلات، حلويات، فواكه وخضار، مشروبات، أماكن، مدن عربية، دول، حيوانات، مهن، أشياء في البيت، أدوات المطبخ، ملابس، أدوات مدرسية، جسم الإنسان، رياضات، ألعاب وتسالي، وسائل نقل، أجهزة، طبيعة وطقس، آلات موسيقية، شخصيات كرتون، مناسبات. وبتختار الفئات من الإعدادات.</p>`},
   mafia:{t:"🕵️ المافيا",b:`<p>مدينة فيها مافيا مخفية. المافيا تقتل في الليل، والمدينة تحاول كشفهم بالنقاش والتصويت في النهار. الجوال هو الراوي. تحتاج 5 لاعبين على الأقل، كل لاعب على جواله.</p>
     <h3>الأدوار</h3><table class="stbl"><tr><th>الدور</th><th>قدرته</th></tr>
     <tr><td>🔪 المافيا</td><td>يعرفون بعضهم، ويتفقون كل ليلة على قتل لاعب. عددهم: 1 مع 5–6 لاعبين، و2 مع 7–9، و3 مع 10–12.</td></tr>
@@ -1293,6 +1316,7 @@ const VIEWS={
       <h1>كيف تحبون تلعبون؟</h1>
       <div class="muted"><b>🎭 تمويه:</b> سؤال غريب، كل واحد يكتب كذبة مقنعة، والكل يحاول يكشف الحقيقة.</div>
       <div class="muted"><b>🎲 كم تراهن؟</b> سؤال جوابه رقم، كل واحد يقدّر، ثم تراهنون على الأقرب.</div>
+      <div class="muted"><b>🤫 الضايع:</b> الكل بعرف الكلمة إلا واحد، اكشفوه قبل ما يعرفها.</div>
       <div class="muted"><b>🔤 اسم جماد بلد:</b> حرف عشوائي، واكتب اسماً وجماداً ونباتاً وحيواناً وبلداً تبدأ به قبل الكل.</div>
       <div class="muted" style="font-size:.8rem">تختار نوع اللعبة في الخطوة التالية.</div>
     </section>
@@ -1316,7 +1340,7 @@ const VIEWS={
     return `<section class="card">
       <h1>لعبة جديدة</h1>
       ${modeChipsHTML(false)}
-      <ol class="rules">${RULES[S.mode==="bet"||S.mode==="hrf"?S.mode:"tmw"]}</ol>${helpBtn()}
+      <ol class="rules">${RULES[["bet","hrf","brr"].includes(S.mode)?S.mode:"tmw"]}</ol>${helpBtn()}
     </section>
     <section class="card">
       <div class="eyebrow">اللاعبون (${S.players.length} من ${MAX_PLAYERS})</div>
@@ -1324,7 +1348,7 @@ const VIEWS={
       ${S.players.length<MAX_PLAYERS?`<button class="btn ghost" id="add">+ أضف لاعباً</button>`:""}
     </section>
     <section class="card">
-      ${S.mode==="hrf"?`<div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${hTimeChips()}<div class="muted">كل لاعب يكتب بدوره ثم يسلّم الجوال، وفي آخر الجولة تراجعون الإجابات معاً.</div>`:`${catChipsHTML()}
+      ${S.mode==="brr"?`<div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${bCatChips()}<div class="muted">كل لاعب يشوف الكلمة بدوره ثم يسلّم الموبايل، والتصويت سري بالدور.</div>`:S.mode==="hrf"?`<div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${hTimeChips()}<div class="muted">كل لاعب يكتب بدوره ثم يسلّم الجوال، وفي آخر الجولة تراجعون الإجابات معاً.</div>`:`${catChipsHTML()}
       <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>
       <div class="eyebrow">الوقت لكل لاعب</div><div class="chips">${tm}</div>`}
     </section>
@@ -1839,8 +1863,10 @@ app.addEventListener("click",e=>{
   if(t.dataset.help){ if(S.screen!=="help") S.helpBack=S.screen; S.helpK=t.dataset.help; S.screen="help"; render(); try{window.scrollTo(0,0);}catch(e){} return; }
   if(t.dataset.helpback!=null){ S.screen=S.helpBack||"home"; render(); return; }
   if(t.dataset.htime){S.htime=+t.dataset.htime;render();return;}
+  if(t.dataset.brc){const k=t.dataset.brc,cur=S.brc&&S.brc.length?S.brc:Object.keys(BCATS);S.brc=cur.includes(k)?cur.filter(x=>x!==k):cur.concat([k]);if(!S.brc.length)S.brc=[k];render();return;}
   if(S.screen==="online"&&onlineClick(t)) return;
   if(S.h&&S.screen[0]==="h"&&S.screen!=="home"&&S.screen!=="help"&&hrfLocalClick(t)) return;
+  if(S.b&&S.screen[0]==="b"&&S.screen!=="bank"&&brrLocalClick(t)) return;
   if(t.dataset.endlocal!=null){
     if(!S.endArm){S.endArm=true;render();setTimeout(()=>{if(S.endArm){S.endArm=false;render();}},5000);return;}
     S.endArm=false;stopTimer();S.screen="setup";render();return;
@@ -1857,7 +1883,7 @@ app.addEventListener("click",e=>{
   else if(t.dataset.resetq!=null){if(S.resetArm){USED.clear();saveUsed();S.resetArm=false;try{const db=fbInit();if(db) whenAuth().then(u=>{if(u) db.ref("seen/"+myPid).remove().catch(()=>{});});}catch(e){}}else S.resetArm=true;render();}
   else if(t.dataset.catset){const cs=t.dataset.catset;S.cats=(cs==="kids"?KID_CATS:ADULT_CATS).filter(k=>leftIn(k));if(cs!=="adult"&&S.timer&&S.timer<60)S.timer=60;render();}
   else if(t.dataset.choose) chooseCat(t.dataset.choose);
-  else if(t.id==="start"){ if(S.mode==="hrf") hrfStartLocal(); else startGame(); }
+  else if(t.id==="start"){ if(S.mode==="hrf") hrfStartLocal(); else if(S.mode==="brr") brrStartLocal(); else startGame(); }
   else if(t.id==="ready"){S.screen=S.phase;startTimer();render();}
   else if(t.id==="submitFake") submitFake(false);
   else if(t.dataset.pick!=null) pick(+t.dataset.pick);
@@ -2110,7 +2136,7 @@ async function enterRoom(code,host,resume){
   if(host){
     let restored=false;
     if(resume){ try{ const st=await O.R.loadState(); if(st){ for(const k in HS) delete HS[k]; Object.assign(HS,JSON.parse(st)); restored=true; } }catch(e){} }
-    if(!restored) Object.assign(HS,{phase:"lobby",players:[],scores:{},round:0,rounds:S.rounds,timer:S.timer,cats:S.cats.slice(),level:S.level,mode:S.mode||"tmw",dur:(S.mdur||3)*60,htime:S.htime||120,used:[],deadline:0});
+    if(!restored) Object.assign(HS,{phase:"lobby",players:[],scores:{},round:0,rounds:S.rounds,timer:S.timer,cats:S.cats.slice(),level:S.level,mode:S.mode||"tmw",dur:(S.mdur||3)*60,htime:S.htime||120,brc:(S.brc||[]).slice(),used:[],deadline:0});
     lastPub="";
     hostIv=setInterval(hostStep,500);
   }
@@ -2200,6 +2226,7 @@ function hostStep(){
   hostReseat(H);
   if(H.mode==="mafia"&&H.phase!=="lobby"){ mafiaStep(H,now); publish(); return; }
   if(H.mode==="hrf"&&H.phase!=="lobby"){ hrfStep(H,now); publish(); return; }
+  if(H.mode==="brr"&&H.phase!=="lobby"){ brrStep(H); publish(); return; }
   if(H.phase==="lobby"){
     const me=myPeer(),seen=[];
     O.peers.forEach(p=>{if(p.kind==="viewer"&&p.presence&&p.presence.n&&p.presence.on!==false&&!seen.some(s=>s.p===p.peer)) seen.push({p:p.peer,n:String(p.presence.n).slice(0,16)});});
@@ -2272,6 +2299,7 @@ function hostAction(a){
   const H=HS;
   if(H.mode==="mafia"){ mafiaAction(a); return; }
   if(H.mode==="hrf"){ hrfAction(a); return; }
+  if(H.mode==="brr"){ brrAction(a); return; }
   if(a==="start"){if(!H.players.length) return; if(H.players.some(p=>!SEEN[p.p])){H.players.forEach(p=>loadSeenFor(p.p));return;}H.scores={};H.pst={};H.saved=0;H.round=0;hostNextRound();}
   else if(a==="random"&&H.phase==="choose") hostSetQ("random");
   else if(a==="skip"){if(H.phase==="write") hostToPick();else if(H.phase==="pick") hostToReveal();}
@@ -2285,6 +2313,7 @@ function hostAction(a){
 function buildG(){
   if(HS.mode==="mafia"){ const g=mafiaG(); if(HS.phase==="lobby") g.dur=HS.dur; return g; }
   if(HS.mode==="hrf") return hrfG();
+  if(HS.mode==="brr") return brrG();
   const H=HS,n=H.players.length;
   const g={md:H.mode==="bet"?"bet":"tmw",out:H.out?1:0,tb:H.round>H.rounds?(topTie(H.scores,H.players.length)||[]):0,ph:H.phase,r:H.round,rs:H.rounds,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>H.scores[i]||0)};
   if(H.phase==="choose"&&n){g.ch=(H.round-1)%n;g.cats=H.cats.map(k=>[k,remainingIn(H.used,k)]);}
@@ -2858,6 +2887,281 @@ function hrfClick(a,t){
   return false;
 }
 
+// ================= 🤫 الضايع =================
+// الكل يعرف «الكلمة» (كلمة سرية من فئة) إلا لاعباً واحداً. يسأل اللاعبون بعضهم بالدور، ثم يصوّتون على من يظنونه الضايع،
+// ثم يحاول هو تخمين الكلمة من بين 8 خيارات. النقاط: +2 لكل من صوّت عليه، و+3 له إن لم ينكشف، و+3 إن عرف الكلمة.
+const BCATS={
+  food:["أكلات","منسف،مقلوبة،كشري،ملوخية،فلافل،حمص،فول،شاورما،كبة،مسخن،ورق عنب،محشي،فتة،تبولة،فتوش،مجدرة،بيتزا،برجر،معكرونة،شوربة عدس،كباب،منقوشة زعتر،مسقعة،حواوشي،سمك مقلي"],
+  sweets:["حلويات","كنافة،بسبوسة،قطايف،بقلاوة،أم علي،رز بحليب،مهلبية،معمول،عوامة،كيك،دونات،آيس كريم،تشيز كيك،شوكولاتة،غريبة،كعك العيد،حلاوة طحينية،كريم كراميل،وربات،جاتوه،بان كيك،وافل،كرواسون،تيراميسو،هريسة"],
+  fruitveg:["فواكه وخضار","تفاح،موز،بطيخ،شمام،عنب،فراولة،برتقال،ليمون،مانجا،رمان،تين،مشمش،خوخ،كرز،جوافة،أناناس،خيار،جزر،باذنجان،كوسا،بصل،ثوم،خس،بامية،ذرة"],
+  drinks:["مشروبات","شاي،قهوة تركية،نسكافيه،كابتشينو،عصير برتقال،ليموناضة،ليمون بالنعناع،حليب،سحلب،تمر هندي،عرق سوس،قمر الدين،جلاب،كركديه،ينسون،كولا،ماء،عصير قصب،عصير مانجا،ميلك شيك،شاي أخضر،هوت شوكليت،قهوة مثلجة،موهيتو،زهورات"],
+  places:["أماكن","مستشفى،مطار،مدرسة،سينما،جامع،مطعم،شاطئ،صيدلية،حديقة حيوانات،ملعب كرة،مكتبة،بنك،سوبرماركت،صالون حلاقة،فندق،محطة بنزين،مول،جامعة،فرن،جيم،مدينة ملاهي،سوق خضار،محكمة،كوفي شوب،مكتب بريد"],
+  cities:["مدن عربية","عمّان،القاهرة،بيروت،دمشق،الإسكندرية،إربد،العقبة،حلب،القدس،غزة،نابلس،بغداد،الرياض،دبي،الدوحة،مراكش،الأقصر،أسوان،شرم الشيخ،جرش،الزرقاء،حمص،صيدا،جدة،مكة"],
+  countries:["دول","السعودية،مصر،اليابان،البرازيل،فرنسا،الهند،تركيا،المغرب،أمريكا،الصين،إيطاليا،روسيا،الكويت،الأردن،أستراليا،المكسيك،ماليزيا،بريطانيا،ألمانيا،إسبانيا،لبنان،الإمارات،كندا،تايلاند،الأرجنتين"],
+  animals:["حيوانات","جمل،أسد،قطة،حصان،فيل،زرافة،دلفين،تمساح،نسر،صقر،بطريق،قرد،ثعبان،سلحفاة،أرنب،ذئب،دب،نحلة،بومة،غزال،خروف،ديك،قرش،حمار وحشي،كنغر"],
+  jobs:["مهن","طبيب أسنان،طيار،معلم،شرطي،طباخ،مهندس،محامي،ممرض،حلاق،نجار،سباك،إطفائي،مذيع،مصور،صيدلي،خياط،رائد فضاء،لاعب كرة،سائق تاكسي،مبرمج،مزارع،صياد سمك،حارس أمن،كاشير،ميكانيكي"],
+  home:["أشياء في البيت","ثلاجة،غسالة،مكيف،تلفزيون،كنبة،سرير،مرآة،مكنسة،فرن،ستارة،مخدة،ساعة حائط،مروحة،سجادة،خلاط،مكواة،خزانة ملابس،طاولة سفرة،بطانية،ميكروويف،كرسي هزاز،سخان،مصباح،غسالة صحون،رف كتب"],
+  kitchen:["أدوات المطبخ","طنجرة،مقلاة،سكين،شوكة،ملعقة،صحن،كوب،إبريق شاي،مصفاة،لوح تقطيع،مبشرة،فتّاحة علب،طنجرة ضغط،صينية،ملّاحة،ترمس،مغرفة،شوّاية،مريلة مطبخ،علبة بهارات،فنجان،مكبس ثوم،نشّابة،ميزان مطبخ،إسفنجة"],
+  clothes:["ملابس","قميص،بنطلون،جاكيت،فستان،حذاء رياضي،شبشب،ربطة عنق،طاقية،شال،كوفية،جلابية،بيجاما،معطف،تيشيرت،شورت،بدلة رسمية،حزام،نظارة شمسية،ساعة يد،خاتم،قفازات،عباية،كاب،تنورة،زي مدرسي"],
+  school:["أدوات مدرسية","قلم رصاص،ممحاة،مبراة،مسطرة،دفتر،كتاب،حقيبة مدرسية،فرجار،منقلة،ألوان خشبية،سبورة،طباشير،دبّاسة،مقص،شريط لاصق،ملف،قلم حبر،قلم تظليل،مقلمة،خريطة،مجسم الكرة الأرضية،جرس المدرسة،كراسة رسم،صمغ،ورق ملون"],
+  body:["جسم الإنسان","قلب،دماغ،عين،أنف،أذن،لسان،سن،معدة،كبد،رئة،كلية،يد،رجل،ركبة،كوع،كتف،رقبة،ظهر،شعر،أظافر،جلد،إصبع،حاجب،رمش،عظمة"],
+  sports:["رياضات","كرة القدم،كرة السلة،السباحة،التنس،الملاكمة،الجري،ركوب الخيل،الغولف،الكاراتيه،البولينغ،التزلج على الثلج،ركوب الدراجات،كرة الطائرة،الشطرنج،البلياردو،رفع الأثقال،الغوص،المصارعة،تنس الطاولة،الرماية،سباق السيارات،القفز بالمظلات،كرة اليد،البادل،الجمباز"],
+  toys:["ألعاب وتسالي","طاولة زهر،ورق لعب،دومينو،ليجو،مونوبولي،أونو،بازل،طيارة ورق،مرجيحة،كرة،دمية،سيارة ريموت،يويو،حبل نط،ألعاب نارية،مسدس ماء،مكعب روبيك،سودوكو،كلمات متقاطعة،بالونة،فقاعات صابون،دراجة أطفال،سكيت بورد،حصان هزاز،بلايستيشن"],
+  transport:["وسائل نقل","طائرة،قطار،سيارة،دراجة هوائية،سفينة،غواصة،هليكوبتر،باص،تاكسي،موتوسيكل،مترو،قارب،صاروخ،منطاد،شاحنة،سكوتر،حنطور،يخت،تلفريك،سيارة إسعاف،ونش،توك توك،جت سكي،سيارة إطفاء،باص مدرسة"],
+  devices:["أجهزة","موبايل،لابتوب،سماعة رأس،ريموت،كاميرا،ساعة ذكية،طابعة،شاحن،راوتر،تابلت،ميكروفون،بروجكتر،فلاش ميموري،ماوس،كيبورد،درون،نظارة واقع افتراضي،آلة حاسبة،سبيكر،سشوار،ماكينة قهوة،مكنسة روبوت،باور بانك،تلفزيون ذكي،كاميرا مراقبة"],
+  nature:["طبيعة وطقس","شمس،قمر،نجوم،مطر،ثلج،غيم،رعد،برق،قوس قزح،بحر،نهر،جبل،صحراء،غابة،بركان،زلزال،شلال،جزيرة،كهف،وادي،رمل،ضباب،ريح،بحيرة،شجرة"],
+  music:["آلات موسيقية","عود،كمان،بيانو،طبلة،دف،ناي،قانون،جيتار،درامز،ساكسفون،ترومبيت،أكورديون،هارمونيكا،ربابة،مزمار،زايلوفون،تشيلو،فلوت،أورغ،صنج،هارب،كلارينيت،بوق،مثلث موسيقي،كونترباص"],
+  cartoons:["شخصيات كرتون","توم وجيري،سبونج بوب،كابتن ماجد،عدنان ولينا،ميكي ماوس،النمر الوردي،بوكيمون،المحقق كونان،سالي،هايدي،ريمي،سبايدر مان،سوبرمان،باتمان،باباي،سنو وايت،علاء الدين،الأسد الملك،شريك،فروزن،فتى الأدغال،السنافر،بكار،بن تن،دورا"],
+  events:["مناسبات","عرس،خطوبة،عيد ميلاد،تخرج،عيد الفطر،عيد الأضحى،رمضان،عزاء،رحلة مدرسية،سفر،نتيجة الثانوية،حفلة شواء،سهرة،كتب كتاب،حنّة،مولود جديد،رأس السنة،يوم الأم،أول يوم مدرسة،شهر العسل،مقابلة عمل،عزومة،صلاة الجمعة،امتحانات،طهور"]
+};
+const BWORDS={}; Object.entries(BCATS).forEach(([k,[,w]])=>BWORDS[k]=w.split("،"));
+const BMIN=3, BPTS={vote:2,hide:3,guess:3,tq:5,tqMiss:2,acc:3,accMiss:2};
+function bNewRound(st,cats,n){
+  // لاعب جديد يكون الضايع كل جولة قدر الإمكان، وكلمة لم تُلعب في نفس اللعبة
+  st.round++;
+  const pool=cats.length?cats:Object.keys(BCATS); const c=pool[Math.floor(Math.random()*pool.length)];
+  const left=BWORDS[c].filter(w=>!st.usedW.includes(c+":"+w)), words=left.length?left:BWORDS[c];
+  st.cat=c; st.word=words[Math.floor(Math.random()*words.length)]; st.usedW.push(c+":"+st.word);
+  const cand=Array.from({length:n},(_,i)=>i).filter(i=>!st.wasOut.includes(i));
+  const pick=cand.length?cand:Array.from({length:n},(_,i)=>i);
+  st.ou=pick[Math.floor(Math.random()*pick.length)]; st.wasOut=cand.length?st.wasOut.concat([st.ou]):[st.ou];
+  st.opts=shuffle([st.word].concat(shuffle(BWORDS[c].filter(w=>w!==st.word)).slice(0,7)));
+  const ord=shuffle(Array.from({length:n},(_,i)=>i)); st.order=ord.map((p,i)=>[p,ord[(i+1)%n]]); st.qi=0; st.qround=1;
+  st.votes={}; st.guess=-1; st.gains=null; st.caught=0; st.early=0; st.acc=null;
+}
+function bTally(st,n){
+  const c={}; Object.values(st.votes).forEach(t=>c[t]=(c[t]||0)+1);
+  const mx=Math.max(0,...Object.values(c)), top=Object.keys(c).filter(t=>c[t]===mx).map(Number);
+  st.caught=top.length===1&&top[0]===st.ou?1:0; st.vc=c;
+}
+function bScore(st,n){
+  const g=Array(n).fill(0), right=st.guess>=0&&st.opts[st.guess]===st.word;
+  if(st.early){ // «عرفتها!»: الضايع أوقف اللعب وخمّن قبل التصويت
+    if(right) g[st.ou]+=BPTS.tq; else for(let i=0;i<n;i++) if(i!==st.ou) g[i]+=BPTS.tqMiss;
+  } else {
+    Object.entries(st.votes).forEach(([v,t])=>{ if(+v!==st.ou&&t===st.ou) g[+v]+=BPTS.vote; });
+    if(!st.caught) g[st.ou]+=BPTS.hide;
+    if(right) g[st.ou]+=BPTS.guess;
+    if(st.acc) g[st.acc.by]+=st.acc.t===st.ou?BPTS.acc:-BPTS.accMiss; // الاتهام المبكر
+  }
+  for(let i=0;i<n;i++){ g[i]=Math.max(g[i],-(st.scores[i]||0)); st.scores[i]=(st.scores[i]||0)+g[i]; } // لا تنزل النقاط تحت الصفر
+  st.gains=g;
+}
+const bCatChips=()=>{const sel=S.brc&&S.brc.length?S.brc:Object.keys(BCATS);
+  return `<div class="eyebrow">فئات الكلمات</div><div class="chips">${Object.entries(BCATS).map(([k,[n]])=>`<button class="chip" data-brc="${k}" aria-pressed="${sel.includes(k)}">${n}</button>`).join("")}</div><div class="muted">كل جولة تُختار كلمة عشوائية من الفئات المختارة.</div>`;};
+// ---------- قطع الواجهة
+function bOrderHTML(order,qi,names,me){
+  return `<div class="border">${order.map(([a,b],i)=>`<div class="bq${i===qi?" now":i<qi?" done":""}"><span>${esc(names[a])}${a===me?" (أنت)":""}</span><span class="arr">يسأل ←</span><span>${esc(names[b])}${b===me?" (أنت)":""}</span></div>`).join("")}</div>`;
+}
+function bVotesHTML(names,votes,out){
+  const c={}; Object.values(votes).forEach(t=>c[t]=(c[t]||0)+1);
+  return `<div class="mlist">${names.map((n,i)=>{const by=Object.entries(votes).filter(([,t])=>+t===i).map(([v])=>names[v]);
+    return `<div class="mp${i===out?" bout":""}"><span>${i===out?"🤫 ":""}${esc(n)} <b>${c[i]||0}</b></span><small>${by.length?"صوّت عليه: "+by.map(esc).join("، "):""}</small></div>`;}).join("")}</div>`;
+}
+function bScoreLines(st,names){
+  const out=names[st.ou], right=st.guess>=0&&st.opts[st.guess]===st.word;
+  if(st.early) return `<div class="mev">الكلمة كانت: <b class="hx">${esc(st.word)}</b> (${BCATS[st.cat][0]})</div>
+    <div class="mev">🤫 <b>${esc(out)}</b> قال «عرفتها!» قبل التصويت، ${right?`وعرف الكلمة: +${BPTS.tq} 🔥`:`وخمّن «${esc(st.opts[st.guess])}» وكانت خطأ! انكشف، وكل البقية +${BPTS.tqMiss}.`}</div>`;
+  const acc=st.acc?`<div class="mev">☝️ اتهام <b>${esc(names[st.acc.by])}</b> لـ<b>${esc(names[st.acc.t])}</b>: ${st.acc.t===st.ou?`صاب! +${BPTS.acc}`:`خطأ، −${BPTS.accMiss}`}</div>`:"";
+  return acc+`<div class="mev">الكلمة كانت: <b class="hx">${esc(st.word)}</b> (${BCATS[st.cat][0]})</div>
+    <div class="mev">${st.caught?`🎯 انكشف <b>${esc(out)}</b>! كل من صوّت عليه +${BPTS.vote}.`:`😎 <b>${esc(out)}</b> ما انكشف: +${BPTS.hide}.`}</div>
+    <div class="mev">${st.guess<0?`لم يخمّن ${esc(out)} الكلمة.`:right?`🧠 وعرف الكلمة: +${BPTS.guess}.`:`وخمّن «${esc(st.opts[st.guess])}» وكانت خطأ.`}</div>`;
+}
+const bTargets=(names,me,attr,sel)=>`<div class="ogrid">${names.map((n,i)=>i===me?"":`<button class="opt${sel===i?" mine":""}" ${attr}="${i}"><span class="ot">${esc(n)}</span></button>`).join("")}</div>`;
+const bOpts=(opts,attr,sel,word)=>`<div class="ogrid">${opts.map((w,i)=>`<button class="opt${sel===i?" mine":""}${word!=null&&w===word?" truth":""}" ${attr}="${i}"><span class="ot">${esc(w)}</span></button>`).join("")}</div>`;
+
+// ---------- موبايل واحد
+function brrStartLocal(){
+  const names=S.players.map(s=>s.trim());
+  if(names.some(n=>!n)){S.err="اكتب اسم كل لاعب، أو احذف الخانة الفارغة.";return render();}
+  if(new Set(names).size!==names.length){S.err="كل لاعب يحتاج اسماً مختلفاً.";return render();}
+  if(names.length<BMIN){S.err=`الضايع تحتاج ${BMIN} لاعبين على الأقل.`;return render();}
+  S.players=names; noteName(names.join("، ")); S.err="";
+  S.b={round:0,rounds:S.rounds,usedW:[],wasOut:[],scores:{},accUsed:{},cats:(S.brc&&S.brc.length?S.brc:Object.keys(BCATS)).slice(),saved:false};
+  bNextLocal();
+}
+function bNextLocal(){ const b=S.b; bNewRound(b,b.cats,S.players.length); b.turn=0; S.screen="bhand"; render(); try{window.scrollTo(0,0);}catch(e){} }
+const bTop=()=>{try{window.scrollTo(0,0);}catch(e){}};
+Object.assign(VIEWS,{
+  bhand(){ const b=S.b, who=S.players[b.turn], prog=S.players.map((_,i)=>`<span class="${i<b.turn?"done":""}"></span>`).join("");
+    return `<section class="card handoff">${mascot}<div class="muted">سلّم الموبايل إلى</div><div class="big-name">${esc(who)}</div>
+      <div class="muted">ليشوف الكلمة سراً. لا تدع أحداً يرى الشاشة.</div><div class="progress">${prog}</div></section>
+      <button class="btn" data-bgo="bshow">أنا ${esc(who)}، اعرض</button>`; },
+  bshow(){ const b=S.b, me=b.turn, out=me===b.ou;
+    return `<section class="card handoff">${out?`<div class="bsecret out">🤫</div><div class="big-name">أنت الضايع!</div><div class="muted">الفئة: <b>${BCATS[b.cat][0]}</b>. جاوب بثقة، والقط الكلمة من أسئلتهم.</div>`
+      :`<div class="muted">الكلمة</div><div class="bsecret">${esc(b.word)}</div><div class="muted">الفئة: ${BCATS[b.cat][0]}. لا توضّحها كتير… في واحد فيكم ما بعرف الكلمة!</div>`}</section>
+      <button class="btn" data-bhide>خبّيها وسلّم الموبايل</button>`; },
+  bask(){ const b=S.b, done=b.qi>=b.order.length, cur=b.order[b.qi];
+    return `<section class="card"><div class="eyebrow">الأسئلة — الفئة: ${BCATS[b.cat][0]}${b.qround>1?" (الدورة الثانية)":""}</div>
+      ${done?`<div class="muted">خلصت الأسئلة! دورة ثانية، أو للتصويت؟</div>`:`<div class="bnow"><b>${esc(S.players[cur[0]])}</b> يسأل <b>${esc(S.players[cur[1]])}</b></div><div class="muted">سؤال واحد عن الكلمة بدون ما تذكرها.</div>`}
+      ${bOrderHTML(b.order,b.qi,S.players,-1)}</section>
+      ${done?`<button class="btn ghost" data-bmore>🔁 دورة أسئلة ثانية</button>`:`<button class="btn" data-bnext>السؤال التالي</button>`}
+      <button class="btn ${done?"":"ghost"}" data-bgo="bvhand">🗳️ للتصويت${done?"":" الآن"}</button>
+      <div class="row"><button class="btn ghost small" data-bgo="btq1">🤫 عرفتها! (للضايع)</button>${S.players.some((_,i)=>!b.accUsed[i])?`<button class="btn ghost small" data-bgo="bacc1">☝️ اتهام مبكر</button>`:""}</div>`; },
+  btq1(){ return `<section class="card"><div class="eyebrow">🤫 عرفتها!</div><div class="muted">إذا كنت الضايع وعرفت الكلمة، خمّنها الآن قبل التصويت: إذا أصبت +${BPTS.tq}، وإذا أخطأت تنكشف وكل البقية بياخذوا +${BPTS.tqMiss}.</div>
+      <div class="muted">مين أنت؟</div><div class="ogrid">${S.players.map((n,i)=>`<button class="opt" data-btqby="${i}"><span class="ot">${esc(n)}</span></button>`).join("")}</div></section>
+      <button class="btn ghost" data-bgo="bask">رجوع للأسئلة</button>`; },
+  bacc1(){ const b=S.b; return `<section class="card"><div class="eyebrow">☝️ اتهام مبكر — مين يتّهم؟</div><div class="muted">لكل لاعب اتهام واحد في اللعبة كلها. يوقف الأسئلة ويبدأ التصويت فوراً: إذا كان المتهم الضايع +${BPTS.acc}، وإذا كان بريئاً −${BPTS.accMiss}.</div>
+      <div class="ogrid">${S.players.map((n,i)=>b.accUsed[i]?"":`<button class="opt" data-baccby="${i}"><span class="ot">${esc(n)}</span></button>`).join("")}</div></section>
+      <button class="btn ghost" data-bgo="bask">رجوع للأسئلة</button>`; },
+  bacc2(){ const b=S.b; return `<section class="card"><div class="eyebrow">${esc(S.players[b.accBy])} يتّهم…</div>${bTargets(S.players,b.accBy,"data-bacct")}</section><button class="btn ghost" data-bgo="bask">رجوع للأسئلة</button>`; },
+  bvhand(){ const b=S.b, who=S.players[b.turn], prog=S.players.map((_,i)=>`<span class="${i<b.turn?"done":""}"></span>`).join("");
+    return `<section class="card handoff">${mascot}<div class="muted">التصويت السري — سلّم الموبايل إلى</div><div class="big-name">${esc(who)}</div><div class="progress">${prog}</div></section>
+      <button class="btn" data-bgo="bvote">أنا ${esc(who)}، أصوّت</button>`; },
+  bvote(){ const b=S.b; return `<section class="card">${b.acc?`<div class="notice">☝️ ${esc(S.players[b.acc.by])} يتّهم ${esc(S.players[b.acc.t])}!</div>`:""}<div class="eyebrow">${esc(S.players[b.turn])}: مين الضايع؟</div>${bTargets(S.players,b.turn,"data-bv")}</section>`; },
+  bres(){ const b=S.b, out=S.players[b.ou];
+    return `<section class="card"><div class="eyebrow">نتيجة التصويت</div>${bVotesHTML(S.players,b.votes,b.ou)}
+      <div class="mev">${b.caught?`🎯 انكشف! <b>${esc(out)}</b> كان الضايع.`:`😎 ما انكشف! <b>${esc(out)}</b> كان الضايع.`}</div></section>
+      <button class="btn" data-bgo="bguess">سلّم الموبايل لـ${esc(out)} ليخمّن الكلمة</button>`; },
+  bguess(){ const b=S.b; return `<section class="card">${b.early?`<div class="notice">🤫 ${esc(S.players[b.ou])} قال «عرفتها!»</div>`:""}<div class="eyebrow">${esc(S.players[b.ou])}: شو الكلمة؟</div><div class="muted">الفئة: ${BCATS[b.cat][0]}. ${b.early?`إذا أصبت +${BPTS.tq}، وإذا أخطأت كل البقية +${BPTS.tqMiss}.`:`إذا عرفتها بتاخذ +${BPTS.guess}.`}</div>${bOpts(b.opts,"data-bg")}</section>`; },
+  bnotout(){ const b=S.b; return `<section class="card handoff"><div class="big-name">✋ لا!</div><div class="muted"><b>${esc(S.players[b.tqTry])}</b> مش الضايع. «عرفتها!» للضايع فقط. كمّلوا الأسئلة.</div></section><button class="btn" data-bgo="bask">رجوع للأسئلة</button>`; },
+  bscore(){ const b=S.b, last=b.round>=b.rounds;
+    return `<section class="card">${bScoreLines(b,S.players)}</section><section class="card"><div class="eyebrow">نقاط الجولة ${b.round}</div>${hRanksHTML(S.players,b.scores,b.gains)}</section>
+      <button class="btn" data-bnextr>${last?"النتيجة النهائية":"الجولة التالية"}</button>`; },
+  bfinal(){ const b=S.b;
+    if(!b.saved){ b.saved=true; saveGame({m:"l",gm:"brr",r:b.round,rs:b.rounds,lv:"all",c:[],out:0,p:S.players.map((n,i)=>({n,s:b.scores[i]||0,f:0,d:0,b:0,a:0}))}); }
+    const r=S.players.map((n,i)=>({n,s:b.scores[i]||0})).sort((a,c)=>c.s-a.s), tops=r.filter(p=>p.s===r[0].s);
+    return `<section class="card handoff">${mascot}<div class="muted">${tops.length>1?"تعادل في القمة!":"الفائز"}</div><div class="big-name">${tops.map(p=>esc(p.n)).join(" و ")}</div><div class="muted">${r[0].s} نقطة</div></section>
+      <section class="card"><div class="eyebrow">الترتيب</div>${hRanksHTML(S.players,b.scores)}</section>
+      <div class="row"><button class="btn" data-bagain>لعبة جديدة بنفس اللاعبين</button><button class="btn ghost" id="home">إعدادات جديدة</button></div>`; }
+});
+function brrLocalClick(t){
+  const b=S.b, n=S.players.length;
+  if(t.dataset.bgo){ if(t.dataset.bgo==="bvhand"){b.turn=0;} S.screen=t.dataset.bgo; render(); bTop(); return true; }
+  if(t.dataset.bhide!=null){ b.turn++; S.screen=b.turn<n?"bhand":"bask"; render(); bTop(); return true; }
+  if(t.dataset.bnext!=null){ b.qi++; render(); return true; }
+  if(t.dataset.bmore!=null){ b.qi=0; b.qround++; b.order=shuffle(b.order); render(); return true; }
+  if(t.dataset.btqby!=null){ const i=+t.dataset.btqby; if(i===b.ou){ b.early=1; S.screen="bguess"; } else { b.tqTry=i; S.screen="bnotout"; } render(); bTop(); return true; }
+  if(t.dataset.baccby!=null){ b.accBy=+t.dataset.baccby; S.screen="bacc2"; render(); bTop(); return true; }
+  if(t.dataset.bacct!=null){ b.acc={by:b.accBy,t:+t.dataset.bacct}; b.accUsed[b.accBy]=1; b.turn=0; S.screen="bvhand"; render(); bTop(); return true; }
+  if(t.dataset.bv!=null){ b.votes[b.turn]=+t.dataset.bv; b.turn++; if(b.turn<n) S.screen="bvhand"; else { bTally(b,n); S.screen="bres"; } render(); bTop(); return true; }
+  if(t.dataset.bg!=null){ b.guess=+t.dataset.bg; bScore(b,n); S.screen="bscore"; render(); bTop(); return true; }
+  if(t.dataset.bnextr!=null){ if(b.round>=b.rounds){S.screen="bfinal";render();} else bNextLocal(); return true; }
+  if(t.dataset.bagain!=null){ brrStartLocal(); return true; }
+  return false;
+}
+
+// ---------- أونلاين: الكلمة تصل كل لاعب في قناته الخاصة، ولا تظهر في الحالة العامة حتى نهاية الجولة
+function brrStart(H){ H.accUsed={}; H.gid=Date.now(); H.round=0; H.rounds=H.rounds||5; H.usedW=[]; H.wasOut=[]; H.scores={}; H.saved=0; H.step=(H.step||0)+1; brrRound(H); }
+function brrRound(H){ bNewRound(H,H.brc&&H.brc.length?H.brc:Object.keys(BCATS),H.players.length); H.ready={}; H.phase="brole"; H.step++; H.deadline=0; H.rem=0; }
+function brrStep(H){
+  const A=O.acts||{}, act=i=>{const a=A[H.players[i].p];return a&&a.gi===H.gid&&a.rd===H.round?a:null;};
+  if(H.phase==="brole"){ H.players.forEach((_,i)=>{const a=act(i); if(a&&a.k==="bready") H.ready[i]=1;}); if(H.players.every((_,i)=>H.ready[i])){ H.phase="bask"; H.step++; } }
+  else if(H.phase==="bask"){
+    const cur=H.order[H.qi]; if(cur){ const a=act(cur[0]); if(a&&a.k==="bnext"&&a.qi===H.qi&&a.qr===H.qround){ H.qi++; H.step++; } }
+    // «عرفتها!» من الضايع، أو اتهام مبكر من أي لاعب لم يستخدم اتهامه
+    const tq=act(H.ou); if(tq&&tq.k==="btq"){ H.early=1; H.phase="bguess"; H.step++; return bPrivs(H); }
+    for(let i=0;i<H.players.length;i++){ const a=act(i);
+      if(a&&a.k==="bacc"&&!H.accUsed[i]&&Number.isInteger(a.t)&&a.t!==i&&H.players[a.t]){ H.accUsed[i]=1; H.acc={by:i,t:a.t}; H.phase="bvote"; H.votes={}; H.step++; break; } }
+  }
+  else if(H.phase==="bvote"){
+    H.players.forEach((_,i)=>{const a=act(i); if(a&&a.k==="bvote"&&Number.isInteger(a.t)&&a.t!==i&&H.players[a.t]) H.votes[i]=a.t;});
+    if(H.players.every((_,i)=>H.votes[i]!=null)) brrToGuess(H);
+  }
+  else if(H.phase==="bguess"){ const a=act(H.ou); if(a&&a.k==="bguess"&&Number.isInteger(a.t)&&a.t>=0&&a.t<H.opts.length){ H.guess=a.t; bScore(H,H.players.length); H.phase="bscore"; H.step++; } }
+  bPrivs(H);
+}
+function brrToGuess(H){ bTally(H,H.players.length); H.phase="bguess"; H.step++; }
+function bPrivs(H){
+  if(!O.R||!O.R.setPriv||H.ou==null) return;
+  H.players.forEach((pl,i)=>{
+    const v={k:"brr",gi:H.gid,rd:H.round,c:H.cat,o:i===H.ou?1:0}; if(i!==H.ou) v.w=H.word;
+    const s=JSON.stringify(v); if(PRIV_CACHE[pl.p]===s) return; PRIV_CACHE[pl.p]=s;
+    O.R.setPriv(pl.p,s).catch(()=>{ delete PRIV_CACHE[pl.p]; });
+  });
+}
+function brrAction(a){
+  const H=HS;
+  if(a==="start"||a==="again"){ if(H.players.length<BMIN) return; brrStart(H); }
+  else if(a==="bskip"&&H.phase==="brole"){ H.phase="bask"; H.step++; }
+  else if(a==="bnext"&&H.phase==="bask"&&H.qi<H.order.length){ H.qi++; H.step++; }
+  else if(a==="bmore"&&H.phase==="bask"){ H.qi=0; H.qround++; H.order=shuffle(H.order); H.step++; }
+  else if(a==="bvote"&&H.phase==="bask"){ H.phase="bvote"; H.votes={}; H.step++; }
+  else if(a==="bendvote"&&H.phase==="bvote") brrToGuess(H);
+  else if(a==="bnextr"&&H.phase==="bscore"){ if(H.round>=H.rounds){ H.phase="final"; H.step++; } else brrRound(H); }
+  bPrivs(H); publish();
+}
+function brrG(){
+  const H=HS;
+  const g={md:"brr",ph:H.phase,r:H.step||0,rd:H.round||0,rs:H.rounds,gi:H.gid||0,pl:H.players.map(p=>p.n),pp:H.players.map(p=>p.p),sc:H.players.map((_,i)=>(H.scores&&H.scores[i])||0)};
+  if(H.phase==="lobby") return g;
+  g.cat=H.cat;
+  if(H.phase==="brole") g.rdy=Object.keys(H.ready).map(Number);
+  if(H.phase==="bask"){ g.ord=H.order.map(([a,b])=>a*100+b); g.qi=H.qi; g.qr=H.qround; g.au=Object.keys(H.accUsed||{}).map(Number); }
+  if(H.acc&&["bvote","bguess","bscore"].includes(H.phase)) g.ac=[H.acc.by,H.acc.t];
+  if(H.early) g.ear=1;
+  if(H.phase==="bvote") g.dn=Object.keys(H.votes).map(Number);
+  if(H.phase==="bguess"||H.phase==="bscore"){ g.vt=H.players.map((_,i)=>H.votes[i]!=null?H.votes[i]:-1); g.out=H.ou; g.cau=H.caught; g.op=H.opts; }
+  if(H.phase==="bscore"){ g.w=H.word; g.gs=H.guess; g.gn=H.players.map((_,i)=>H.gains[i]||0); g.last=H.round>=H.rounds?1:0; }
+  return g;
+}
+const bAct=(k,extra)=>{ const g=O.g; if(!O.R||!O.R.act||!g) return; O.R.act(Object.assign({r:g.r,rd:g.rd,gi:g.gi,k,s:Date.now()},extra||{})).catch(()=>{}); O.bSent={r:g.r,k,t:extra&&extra.t}; render(); };
+function brrView(g,me,leave){
+  const host=O.host, P=O.priv&&O.priv.k==="brr"&&O.priv.gi===g.gi&&O.priv.rd===g.rd?O.priv:null, cat=BCATS[g.cat]?BCATS[g.cat][0]:"";
+  const sent=k=>O.bSent&&O.bSent.r===g.r&&O.bSent.k===k?O.bSent:null;
+  const secret=P?(P.o?`<div class="bsecret out small">🤫 أنت الضايع</div>`:`<div class="muted">الكلمة: <b class="hx">${esc(P.w)}</b></div>`):"";
+  if(me<0&&g.ph!=="final") return `<section class="card"><div class="muted">أنت تشاهد هذه اللعبة فقط لأنك دخلت بعد بدايتها.</div></section>${leave}`;
+  if(g.ph==="brole"){
+    if(!P) return waitCard("جارٍ استلام الكلمة…");
+    const ok=AV(g.rdy).includes(me)||sent("bready");
+    return `<section class="card handoff">${P.o?`<div class="bsecret out">🤫</div><div class="big-name">أنت الضايع!</div><div class="muted">الفئة: <b>${cat}</b>. جاوب بثقة، والقط الكلمة من أسئلتهم.</div>`
+      :`<div class="muted">الكلمة — لا تُرها لأحد</div><div class="bsecret">${esc(P.w)}</div><div class="muted">الفئة: ${cat}. لا توضّحها كتير… في واحد فيكم ما بعرف الكلمة!</div>`}</section>
+      ${ok?waitCard(`بانتظار البقية… ${AV(g.rdy).length} من ${g.pl.length} جاهزون`):`<button class="btn" data-o="bready">فهمت ✓</button>`}
+      ${host?`<button class="btn ghost small" data-o="bskip">ابدأ الأسئلة دون انتظار</button>`:""}`;
+  }
+  if(g.ph==="bask"){
+    const ord=AV(g.ord).map(x=>[Math.floor(x/100),x%100]), qi=+g.qi, cur=ord[qi], done=qi>=ord.length;
+    const myTurn=cur&&cur[0]===me;
+    return `<section class="card"><div class="eyebrow">الأسئلة — الفئة: ${cat}${g.qr>1?" (الدورة الثانية)":""}</div>${secret}
+      ${done?`<div class="muted">خلصت الأسئلة!${host?" دورة ثانية، أو للتصويت؟":" بانتظار المضيف."}</div>`:`<div class="bnow">${myTurn?"<b>دورك!</b> اسأل":`<b>${esc(g.pl[cur[0]])}</b> يسأل`} <b>${esc(g.pl[cur[1]])}${cur[1]===me?" (أنت)":""}</b></div><div class="muted">سؤال واحد بالصوت عن الكلمة بدون ما تذكرها.</div>`}
+      ${bOrderHTML(ord,qi,g.pl,me)}</section>
+      ${!done&&(myTurn||host)?`<button class="btn" data-o="bnext">${myTurn?"سألت ✓ السؤال التالي":"السؤال التالي"}</button>`:""}
+      ${host?`${done?`<button class="btn ghost" data-o="bmore">🔁 دورة أسئلة ثانية</button>`:""}<button class="btn ${done?"":"ghost"}" data-o="bvote">🗳️ للتصويت${done?"":" الآن"}</button>`:""}
+      ${P&&P.o?(O.bTqArm?`<button class="btn hstop" data-o="btq">متأكد؟ ستنكشف! اضغط مرة ثانية</button>`:`<button class="btn ghost" data-o="btqarm">🤫 عرفتها! بعرف الكلمة</button>`):""}
+      ${AV(g.au).includes(me)||sent("bacc")?"":O.bAccArm?`<section class="card"><div class="eyebrow">☝️ من تتّهم؟ (اتهام واحد في اللعبة كلها)</div><div class="muted">إذا كان الضايع +${BPTS.acc}، وإذا كان بريئاً −${BPTS.accMiss}. يبدأ التصويت فوراً.</div>${bTargets(g.pl,me,'data-o="bacct" data-t',null)}<button class="btn ghost small" data-o="bacccancel">إلغاء</button></section>`:`<button class="btn ghost small" data-o="baccarm">☝️ اتهام مبكر</button>`}`;
+  }
+  if(g.ph==="bvote"){
+    const dn=AV(g.dn), mine=sent("bvote");
+    const ac=AV(g.ac);
+    return `${ac.length?`<div class="notice">☝️ ${esc(g.pl[ac[0]])} يتّهم ${esc(g.pl[ac[1]])}!</div>`:""}<section class="card"><div class="eyebrow">التصويت السري: مين الضايع؟</div>${secret}<div class="muted">تقدر تغيّر صوتك حتى يصوّت الجميع. (${dn.length} من ${g.pl.length} صوّتوا)</div>
+      ${bTargets(g.pl,me,'data-o="bvoteto" data-t',mine?mine.t:null)}</section>${host?`<button class="btn ghost small" data-o="bendvote">أنهِ التصويت الآن</button>`:""}`;
+  }
+  if(g.ph==="bguess"){
+    const vt=AV(g.vt), votes={}; vt.forEach((t,i)=>{if(+t>=0) votes[i]=+t;});
+    const out=+g.out, res=g.ear?`<div class="notice">🤫 <b>${esc(g.pl[out])}</b> قال «عرفتها!» وهو الضايع، ويخمّن الكلمة الآن.</div>`:`<section class="card"><div class="eyebrow">نتيجة التصويت</div>${bVotesHTML(g.pl,votes,out)}<div class="mev">${+g.cau?`🎯 انكشف! <b>${esc(g.pl[out])}</b> كان الضايع.`:`😎 ما انكشف! <b>${esc(g.pl[out])}</b> كان الضايع.`}</div></section>`;
+    if(me===out) return `${res}<section class="card"><div class="eyebrow">شو الكلمة؟</div><div class="muted">${g.ear?`إذا أصبت +${BPTS.tq}، وإذا أخطأت كل البقية +${BPTS.tqMiss}.`:`إذا عرفتها بتاخذ +${BPTS.guess}.`}</div>${sent("bguess")?waitCard("أرسلت تخمينك…"):bOpts(AV(g.op),'data-o="bguessto" data-t')}</section>`;
+    return `${res}${waitCard(`${esc(g.pl[out])} يحاول يخمّن الكلمة…`)}`;
+  }
+  if(g.ph==="bscore"){
+    const ac=AV(g.ac), st={word:g.w,cat:g.cat,ou:+g.out,caught:+g.cau,guess:+g.gs,opts:AV(g.op),early:+g.ear||0,acc:ac.length?{by:+ac[0],t:+ac[1]}:null};
+    const vt=AV(g.vt), votes={}; vt.forEach((t,i)=>{if(+t>=0) votes[i]=+t;});
+    return `<section class="card">${bScoreLines(st,g.pl)}${bOpts(st.opts,"data-x",st.guess,st.word)}</section>
+      <section class="card"><div class="eyebrow">نقاط الجولة ${g.rd}</div>${hRanksHTML(g.pl,AV(g.sc),AV(g.gn))}</section>
+      ${st.early?"":`<section class="card"><div class="eyebrow">الأصوات</div>${bVotesHTML(g.pl,votes,st.ou)}</section>`}
+      ${host?`<button class="btn" data-o="bnextr">${g.last?"النتيجة النهائية":"الجولة التالية"}</button>`:waitCard("بانتظار المضيف للجولة التالية")}`;
+  }
+  if(g.ph==="final"){
+    const sc=AV(g.sc), r=g.pl.map((n,i)=>({n,s:sc[i]||0})).sort((a,b)=>b.s-a.s), tops=r.filter(p=>p.s===r[0].s);
+    return `<section class="card handoff">${mascot}<div class="muted">${tops.length>1?"تعادل في القمة!":"الفائز"}</div><div class="big-name">${tops.map(p=>esc(p.n)).join(" و ")}</div><div class="muted">${r[0].s} نقطة</div></section>
+      <section class="card"><div class="eyebrow">الترتيب</div>${hRanksHTML(g.pl,sc)}</section>${host?`<button class="btn" data-o="again">لعبة جديدة بنفس اللاعبين</button>`:""}${leave}`;
+  }
+  return waitCard("…");
+}
+function brrClick(a,t){
+  const g=O.g, T=+t.dataset.t;
+  if(a==="bready"){ bAct("bready"); return true; }
+  if(a==="bnext"){ if(O.host) brrAction("bnext"); else bAct("bnext",{qi:+g.qi,qr:+g.qr}); return true; }
+  if(a==="bvoteto"){ bAct("bvote",{t:T}); return true; }
+  if(a==="bguessto"){ bAct("bguess",{t:T}); return true; }
+  if(a==="btqarm"){ O.bTqArm=true; render(); setTimeout(()=>{O.bTqArm=false;render();},5000); return true; }
+  if(a==="btq"){ O.bTqArm=false; bAct("btq"); return true; }
+  if(a==="baccarm"){ O.bAccArm=true; render(); return true; }
+  if(a==="bacccancel"){ O.bAccArm=false; render(); return true; }
+  if(a==="bacct"){ O.bAccArm=false; bAct("bacc",{t:T}); return true; }
+  if(O.host&&["bskip","bmore","bvote","bendvote","bnextr"].includes(a)){ brrAction(a); return true; }
+  return false;
+}
+
 // ---------- الواجهات ----------
 const settingsHTML=()=>{
   const ch=Object.entries(CATS).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${S.cats.includes(k)}">${n}</button>`).join("");
@@ -2866,6 +3170,8 @@ const settingsHTML=()=>{
   if(S.mode==="mafia") return `${modeChipsHTML(true)}<ol class="rules">${RULES.mafia}</ol>${helpBtn()}
     <div class="eyebrow">مدة النقاش في النهار</div><div class="stepper"><button class="chip" data-mdur="-1" ${S.mdur<=3?"disabled":""}>−</button><b>${S.mdur} دقائق</b><button class="chip" data-mdur="1" ${S.mdur>=15?"disabled":""}>+</button></div>
     <div class="muted">يمكن للمضيف إضافة دقائق أثناء النقاش حتى 15 دقيقة. تحتاج ${MIN_MAFIA} لاعبين على الأقل، وكل لاعب على جواله.</div>`;
+  if(S.mode==="brr") return `${modeChipsHTML(true)}<ol class="rules">${RULES.brr}</ol>${helpBtn()}
+    <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${bCatChips()}<div class="muted">تحتاج ${BMIN} لاعبين على الأقل، وكل لاعب يشوف الكلمة على موبايله.</div>`;
   if(S.mode==="hrf") return `${modeChipsHTML(true)}<ol class="rules">${RULES.hrf}</ol>${helpBtn()}
     <div class="eyebrow">عدد الجولات</div><div class="chips">${rd}</div>${hTimeChips()}<div class="muted">كل لاعب على جواله، والمضيف هو الحكم: يقبل أو يرفض أي إجابة قبل حساب النقاط.</div>`;
   return `${modeChipsHTML(true)}<ol class="rules">${RULES[S.mode||"tmw"]}</ol>${helpBtn()}${catChipsHTML()}
@@ -2918,7 +3224,7 @@ function gameView(){
   if(O.netDown&&Date.now()-O.netDown>1500) v=`<div class="notice">📶 انقطع الاتصال… جارٍ إعادة الاتصال تلقائياً. لا تغلق الصفحة.</div>`+v;
   if(O.g&&O.g.r>O.g.rs&&["choose","write","pick"].includes(O.g.ph)){const tb=Array.isArray(O.g.tb)?O.g.tb:(O.g.tb&&typeof O.g.tb==="object"?Object.values(O.g.tb):[]);
     if(tb.length) v=`<div class="notice tbn">⚔️ جولة كسر التعادل بين: ${tb.map(i=>esc(O.g.pl[i])).join(" و ")}</div>`+v;}
-  const midG=O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore"].includes(O.g.ph);
+  const midG=O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore","brole","bask","bvote","bguess","bscore"].includes(O.g.ph);
   if(!v.includes('data-o="leave"')&&!midG){
     const mid=false;
     const msg=O.leaveArm?(O.host?"متأكد؟ ستنتهي اللعبة عند الجميع. اضغط مرة ثانية":"متأكد؟ اضغط مرة ثانية للخروج"):(mid?"اخرج من اللعبة":"اخرج من الغرفة");
@@ -2935,6 +3241,7 @@ function gameViewInner(){
   }
   if(g.md==="mafia"&&g.ph!=="lobby") return mafiaView(g,me,leave);
   if(g.md==="hrf"&&g.ph!=="lobby") return hrfView(g,me,leave);
+  if(g.md==="brr"&&g.ph!=="lobby") return brrView(g,me,leave);
   const viewer=me<0&&g.ph!=="lobby";
   const qBlock=g.q?`<span class="cat-chip">${CATS[g.q[0]]||""}</span><div class="q">${qTextHTML(g.q[1])}</div>${imgHTML(QBYID[g.q[2]])}`:"";
   const prog=(dn)=>`<div class="muted">${dn.length} من ${g.pl.length} أنهوا</div>`;
@@ -2950,8 +3257,8 @@ function gameViewInner(){
         <div class="invite-link" dir="ltr">${esc(inviteURL())}</div></section>
       <section class="card"><div class="eyebrow">نوع اللعبة</div><div><b>${MODE_NAME[g.md||"tmw"]}</b></div></section>
       <section class="card"><div class="eyebrow">اللاعبون (${g.pl.length} من ${MAX_PLAYERS})</div><div class="score-list">${list||'<div class="muted">بانتظار اللاعبين…</div>'}</div></section>
-      ${O.host?(()=>{const ready=HS.players&&HS.players.every(p=>SEEN[p.p]);const minP=g.md==="mafia"?MIN_MAFIA:2,dis=g.pl.length<minP||!ready;
-        return `<button class="btn" data-o="start" ${dis?"disabled":""}>${g.pl.length<minP?(g.md==="mafia"?`المافيا تحتاج ${MIN_MAFIA} لاعبين على الأقل`:"بانتظار لاعب واحد على الأقل"):!ready?"جارٍ تحميل سجل اللاعبين…":"ابدأ اللعب"}</button>`;})():waitCard("بانتظار المضيف ليبدأ اللعبة")}${leave}`;
+      ${O.host?(()=>{const ready=HS.players&&HS.players.every(p=>SEEN[p.p]);const minP=g.md==="mafia"?MIN_MAFIA:g.md==="brr"?BMIN:2,dis=g.pl.length<minP||!ready;
+        return `<button class="btn" data-o="start" ${dis?"disabled":""}>${g.pl.length<minP?(g.md==="mafia"||g.md==="brr"?`${MODE_NAME[g.md]} تحتاج ${minP} لاعبين على الأقل`:"بانتظار لاعب واحد على الأقل"):!ready?"جارٍ تحميل سجل اللاعبين…":"ابدأ اللعب"}</button>`;})():waitCard("بانتظار المضيف ليبدأ اللعبة")}${leave}`;
   }
   if(g.ph==="choose"){
     const who=g.pl[g.ch];
@@ -3034,6 +3341,7 @@ function onlineClick(t){
   if(t.dataset.ostake!=null){O.stake=+t.dataset.ostake;render();return true;}
   if(a&&a[0]==="m"&&O.g&&O.g.md==="mafia"&&mafiaClick(a,t)) return true;
   if(a&&a[0]==="h"&&O.g&&O.g.md==="hrf"&&hrfClick(a,t)) return true;
+  if(a&&a[0]==="b"&&O.g&&O.g.md==="brr"&&brrClick(a,t)) return true;
   if(!a) return false;
   if(a==="home"){S.screen="home";render();}
   else if(a==="menu"){O.screen="menu";O.err="";render();}
@@ -3047,7 +3355,7 @@ function onlineClick(t){
   else if(a==="showans"){O.showSc=false;render();}
   else if(a==="crandom"){const av=O.g.cats.filter(([,l])=>l).map(([k])=>k);if(av.length) oChoose(av[Math.floor(Math.random()*av.length)]);}
   else if(a==="leave"){
-    const mid=O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore"].includes(O.g.ph);
+    const mid=O.g&&["choose","write","pick","reveal","role","night","morning","day","vote","verdict","hspin","hwrite","hjudge","hscore","brole","bask","bvote","bguess","bscore"].includes(O.g.ph);
     if(mid&&!O.leaveArm){O.leaveArm=true;render();setTimeout(()=>{if(O.leaveArm){O.leaveArm=false;render();}},5000);}
     else{O.leaveArm=false;leaveRoom();}
   }
